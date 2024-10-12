@@ -1,4 +1,4 @@
-﻿<!--/* Copyright(C) 2019-2022 Rob Morgan (robert.morgan.e@gmail.com)
+﻿<!--/* Copyright(C) 2019-2024 Rob Morgan (robert.morgan.e@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -61,8 +61,11 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="btnTipSetHome">Faire de la position actuelle, la position Home</system:String>
     <system:String x:Key="btnFlip">Retournement</system:String>
     <system:String x:Key="btnTipFlip">Retournement méridien vers l'autre côté du pied</system:String>
+    <system:String x:Key="btnFlipAzDir">Changer côté Az</system:String>
+    <system:String x:Key="btnTipFlipAzDir">Inverser le sens de rotation de l'azimut</system:String>
     <!--<system:String x:Key="btnHomeReset">Valider la réinitialisation de la position actuelle de la monture comme position Home?</system:String>-->
     <system:String x:Key="btnContinueFlip">Valider le retournement?</system:String>
+    <system:String x:Key="btnContinueFlipAzDir">Acceptez d'échanger le côté de l'azimut. La monture pivotera à 360 degrés</system:String>
     <system:String x:Key="btnTipParkPos">Positions de parking</system:String>
     <system:String x:Key="btnAutoHome">AutoHome</system:String>
     <system:String x:Key="btnAutoHomeComplete">AutoHome Complet</system:String>
@@ -85,6 +88,7 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="botTracking">Suivi</system:String>
     <system:String x:Key="botTipTracking">Suivi en cours</system:String>
     <system:String x:Key="botTipSOP">Côté du pied</system:String>
+    <system:String x:Key="botTipAzDir">Azimuth slew direction</system:String>
     <system:String x:Key="botTipAxisLimit">Limites d'axes, cliquer pour ajuster</system:String>
     <system:String x:Key="botTipWarnings">Alerte, cliquer pour reset</system:String>
     <system:String x:Key="botTipErrors">Erreurs, cliquer pour reset</system:String>
@@ -99,6 +103,10 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="hcTipN">N</system:String>
     <system:String x:Key="hcTipE">E</system:String>
     <system:String x:Key="hcTipS">S</system:String>
+    <system:String x:Key="hcTipL">G</system:String>
+    <system:String x:Key="hcTipU">H</system:String>
+    <system:String x:Key="hcTipR">D</system:String>
+    <system:String x:Key="hcTipD">B</system:String>
     <system:String x:Key="hcTipStop">Stop</system:String>
     <system:String x:Key="hcSpeed">Vitesse</system:String>
     <system:String x:Key="hcTipSpeed">Vitesse de déplacement</system:String>
@@ -143,6 +151,8 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="goAcpCoords">Accepter les coordonnées?</system:String>
     <system:String x:Key="goRa">AD:</system:String>
     <system:String x:Key="goDec">Dec:</system:String>
+    <system:String x:Key="goAz">Az:</system:String>
+    <system:String x:Key="goAlt">Alt:</system:String>
     <system:String x:Key="goCopy">Copier</system:String>
     <system:String x:Key="goTipCopy">Actualiser avec les coordonnées actuelles</system:String>
     <system:String x:Key="goGoTo">GoTo</system:String>
@@ -152,6 +162,8 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="goSyncWarning">Alerte: vérifier les coordonnées!</system:String>
     <system:String x:Key="goSlewing">La monture est en déplacement</system:String>
     <system:String x:Key="goOutLimits">Hors des limites de synchronisation</system:String>
+    <system:String x:Key="goChangeToRaDec">Faites un clic droit pour entrer les coordonnées de Ra Dec</system:String>
+    <system:String x:Key="goChangeToAzAlt">Faites un clic droit pour entrer les coordonnées de Az Alt</system:String>
 
     <!--Backlash -->
     <system:String x:Key="bacDecLash">Backlash en Dec</system:String>
@@ -194,7 +206,7 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="gpsLong">Longitude:</system:String>
     <system:String x:Key="gpsEle">Elévation:</system:String>
     <system:String x:Key="gpsAccept">Valider les Coordonnées?</system:String>
-    <system:String x:Key="gpsNoData">Absence ou coordonnées invalides sur le port COM</system:String>
+    <system:String x:Key="gpsNoData">Absence ou coordonnées invalides</system:String>
     <system:String x:Key="gpsGGA">GGA</system:String>
     <system:String x:Key="gpsRMC">RMC</system:String>
     <system:String x:Key="gpsLocal">Divergence par rapport au temps local</system:String>
@@ -599,9 +611,9 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="aliAlignmentOnTooltip">Activer la modélisation de l'alignement des étoiles</system:String>
     <system:String x:Key="aliAlignmentSettings">Paramètres</system:String>
     <system:String x:Key="aliProximityLimitTooltip">À quelle distance les uns des autres peuvent être synchronisés les points avant qu'ils ne remplacent les points précédents (Secondes d'arc).</system:String>
+    <system:String x:Key="aliAlignmentModeTooltip">Choose whether to use the nearest point or the nearest three points</system:String>
     <system:String x:Key="aliSampleSizeTooltip">Combien de points de synchronisation à proximité doivent être utilisés lors du calcul des positions.</system:String>
     <system:String x:Key="aliNearbyLimitTooltip">À quelle distance les points de synchronisation doivent-ils être avant d’être utilisés dans les calculs (degrés).</system:String>
-    <system:String x:Key="aliClearModelOnStartup">Modèle clair au démarrage</system:String>
     <system:String x:Key="aliClearModelOnStartupTooltip">Cochez si vous souhaitez créer un nouveau modèle chaque fois que vous vous reconnectez.</system:String>
     <system:String x:Key="aliClearAll">Tout effacer</system:String>
     <system:String x:Key="aliClearAllTooltip">Cliquez sur ce bouton pour effacer tous les points d'alignement du modèle.</system:String>
@@ -609,8 +621,9 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="aliDeleteTooltip">Cliquez sur ce bouton pour supprimer le point d'alignement sélectionné.</system:String>
     <system:String x:Key="optAlignment">Alignement</system:String>
     <system:String x:Key="optProximityLimit">Limite de proximité</system:String>
-    <system:String x:Key="optSampleSize">Taille de l'échantillon</system:String>
-    <system:String x:Key="optNearbyLimit">Limite à proximité</system:String>
+    <system:String x:Key="optAlignmentMode">Alignment Behaviour</system:String>
+    <system:String x:Key="optActivePoints">Point Filter</system:String>
+    <system:String x:Key="optThreePointAlgorithm">Three Point Selection</system:String>
 
     <!--1.0.3.2 -->
     <system:String x:Key="customGears">Engrenages personnalisés</system:String>
@@ -724,5 +737,25 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="optAlignmentWarningThreshold">Seuil d'avertissement</system:String>
     <system:String x:Key="aliWarningThresholdTooltip">Le niveau auquel l'avertissement d'alignement est déclenché (multiple de la distance de décalage de synchronisation maximale enregistrée).</system:String>
 
+    <!--1.0.7.8 -->
+    <system:String x:Key="optLogPath">Chemin du journal</system:String>
 
+    <!--1.0.7.9 -->
+    <system:String x:Key="snpDither">Tremblement</system:String>
+    <system:String x:Key="snpDitherOn">Sur</system:String>
+    <system:String x:Key="snpPhdOnOff">Allumé éteint</system:String>
+    <system:String x:Key="snpIntLoops">Boucles d'intervalle</system:String>
+    <system:String x:Key="snpHostIp">Hôte/IP</system:String>
+    <system:String x:Key="snpDitPix">Pixels de tramage</system:String>
+    <system:String x:Key="snpSetPix">Régler les pixels</system:String>
+    <system:String x:Key="snpSetSec">Régler les secondes</system:String>
+    <system:String x:Key="snpTimeSec">Secondes d'expiration</system:String>
+
+    <!--1.0.8.5 -->
+    <system:String x:Key="Meridian">Méridien</system:String>
+    <system:String x:Key="Horizon">Horizon</system:String>
+
+    <!--1.0.8.6 -->
+    <system:String x:Key="HomeDialog">Alerte Home dialogue</system:String>
+    <system:String x:Key="ParkDialog">Alerte Park dialogue</system:String>
 </ResourceDictionary>

@@ -177,4 +177,15 @@ namespace GS.Server.SkyTelescope
         Wifi
     }
 
+    public enum AzSlewMotionType
+    {
+        East,
+        West
+    }
+
+    public enum AltAzTrackingType
+    {
+        Predictor,
+        Rate
+    }
 }

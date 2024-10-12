@@ -9,7 +9,8 @@
              xmlns:skyTelescope="clr-namespace:GS.Server.SkyTelescope"
              mc:Ignorable="d" d:DataContext="{d:DesignInstance skyTelescope:SkyTelescopeVM}">
     <Border Margin="0,0,10,0" BorderBrush="DimGray"  BorderThickness="2" CornerRadius="5">
-        <Grid Background="{StaticResource MaterialDesignToolBarBackground}" ShowGridLines="False">
+        <Grid Background="{StaticResource MaterialDesignToolBarBackground}" ShowGridLines="False" 
+              ToolTip="{StaticResource goChangeToAzAlt}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="47"/>
                 <RowDefinition Height="47"/>
@@ -17,9 +18,9 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="80"/>
                 <ColumnDefinition Width="40"/>
-                <ColumnDefinition Width="65"/>
-                <ColumnDefinition Width="70"/>
-                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Orientation="Vertical" VerticalAlignment="Center">
                 <Button Margin="0,0,0,0" Height="20" Padding="-5" Width="75" ToolTip="{StaticResource goTipCopy}" Command="{Binding PopulateGoToRaDecCommand}" Style="{StaticResource MaterialDesignRaisedDarkButton}" Content="{StaticResource goCopy}" />
@@ -35,7 +36,7 @@
                         </Button>
                     </StackPanel>
             </StackPanel>
-            <ComboBox Grid.Row="0" Grid.Column="2" md:HintAssist.Hint="{StaticResource edHours}" IsEditable="True" md:HintAssist.FloatingScale="1" Width="60" Margin="2" ItemsSource="{Binding Hours}" Style="{StaticResource MaterialDesignFloatingHintComboBox}" >
+            <ComboBox Grid.Row="0" Grid.Column="2" md:HintAssist.Hint="{StaticResource edHours}" IsEditable="True" md:HintAssist.FloatingScale="1" Margin="2" ItemsSource="{Binding Hours}" Style="{StaticResource MaterialDesignFloatingHintComboBox}" >
             <ComboBox.Text>
                 <Binding Path="RaHours" Mode="TwoWay" UpdateSourceTrigger="LostFocus">
                     <Binding.ValidationRules>
@@ -50,7 +51,7 @@
                 </ItemsPanelTemplate>
             </ComboBox.ItemsPanel>
             </ComboBox>
-            <ComboBox Grid.Row="0" Grid.Column="3" md:HintAssist.Hint="{StaticResource edMinutes}" IsEditable="True" md:HintAssist.FloatingScale="1" Width="66" Margin="2"
+            <ComboBox Grid.Row="0" Grid.Column="3" md:HintAssist.Hint="{StaticResource edMinutes}" IsEditable="True" md:HintAssist.FloatingScale="1" Margin="2"
                                 ItemsSource="{Binding Range60}" Style="{StaticResource MaterialDesignFloatingHintComboBox}" >
                 <ComboBox.Text>
                     <Binding Path="RaMinutes" Mode="TwoWay" UpdateSourceTrigger="LostFocus">
@@ -66,7 +67,7 @@
                     </ItemsPanelTemplate>
                 </ComboBox.ItemsPanel>
             </ComboBox>
-            <ComboBox Grid.Row="0" Grid.Column="4" md:HintAssist.Hint="{StaticResource edSeconds}" IsEditable="True" md:HintAssist.FloatingScale="1" Width="76" Margin="2"
+            <ComboBox Grid.Row="0" Grid.Column="4" md:HintAssist.Hint="{StaticResource edSeconds}" IsEditable="True" md:HintAssist.FloatingScale="1" Margin="2"
                                 ItemsSource="{Binding Range60}" Style="{StaticResource MaterialDesignFloatingHintComboBox}" >
                 <ComboBox.Text>
                     <Binding Path="RaSeconds" Mode="TwoWay" UpdateSourceTrigger="LostFocus">
@@ -90,7 +91,7 @@
                     </Button>
                 </StackPanel>
             </StackPanel>
-            <ComboBox Grid.Row="1" Grid.Column="2" md:HintAssist.Hint="{StaticResource edDegrees}" md:HintAssist.FloatingScale="1" IsEditable="True" Width="60" Margin="2" ItemsSource="{Binding DecRange}" Style="{StaticResource MaterialDesignFloatingHintComboBox}" >
+            <ComboBox Grid.Row="1" Grid.Column="2" md:HintAssist.Hint="{StaticResource edDegrees}" md:HintAssist.FloatingScale="1" IsEditable="True" Margin="2" ItemsSource="{Binding DecRange}" Style="{StaticResource MaterialDesignFloatingHintComboBox}" >
                 <ComboBox.Text>
                     <Binding Path="DecDegrees" Mode="TwoWay" UpdateSourceTrigger="LostFocus">
                         <Binding.ValidationRules>
@@ -105,7 +106,7 @@
                     </ItemsPanelTemplate>
                 </ComboBox.ItemsPanel>
             </ComboBox>
-            <ComboBox Grid.Row="1" Grid.Column="3" md:HintAssist.Hint="{StaticResource edMinutes}" IsEditable="True" md:HintAssist.FloatingScale="1" Width="67" Margin="2"
+            <ComboBox Grid.Row="1" Grid.Column="3" md:HintAssist.Hint="{StaticResource edMinutes}" IsEditable="True" md:HintAssist.FloatingScale="1" Margin="2"
                                       ItemsSource="{Binding Range60}" Style="{StaticResource MaterialDesignFloatingHintComboBox}" >
                 <ComboBox.Text>
                     <Binding Path="DecMinutes" Mode="TwoWay" UpdateSourceTrigger="LostFocus">
@@ -121,7 +122,7 @@
                     </ItemsPanelTemplate>
                 </ComboBox.ItemsPanel>
             </ComboBox>
-            <ComboBox Grid.Row="1" Grid.Column="4" md:HintAssist.Hint="{StaticResource edSeconds}" IsEditable="True" md:HintAssist.FloatingScale="1" Width="76" Margin="2"
+            <ComboBox Grid.Row="1" Grid.Column="4" md:HintAssist.Hint="{StaticResource edSeconds}" IsEditable="True" md:HintAssist.FloatingScale="1" Margin="2"
                       ItemsSource="{Binding Range60}" Style="{StaticResource MaterialDesignFloatingHintComboBox}" >
                 <ComboBox.Text>
                     <Binding Path="DecSeconds" Mode="TwoWay" UpdateSourceTrigger="LostFocus">

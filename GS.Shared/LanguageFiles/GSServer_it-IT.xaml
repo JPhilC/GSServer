@@ -1,4 +1,4 @@
-﻿<!--/* Copyright(C) 2019-2022 Rob Morgan (robert.morgan.e@gmail.com)
+﻿<!--/* Copyright(C) 2019-2024 Rob Morgan (robert.morgan.e@gmail.com)
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published
@@ -61,8 +61,11 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="btnTipSetHome">Reset posizione assi a Home</system:String>
     <system:String x:Key="btnFlip">Inv. Meridiano</system:String>
     <system:String x:Key="btnTipFlip">Inversione del Meridiano</system:String>
+    <system:String x:Key="btnFlipAzDir">Inv. Az Lato</system:String>
+    <system:String x:Key="btnTipFlipAzDir">Invertire la direzione di rotazione dell'azimut</system:String>
     <!--<system:String x:Key="btnHomeReset">Accept to reset mount position to the Home position</system:String>-->
     <system:String x:Key="btnContinueFlip">Accetta Inversione del Meridiano</system:String>
+    <system:String x:Key="btnContinueFlipAzDir">Accept to swap azimuth side. Mount will slew 360 degrees</system:String>
     <system:String x:Key="btnTipParkPos">Posizione di Parcheggio</system:String>
     <system:String x:Key="btnAutoHome">AutoHome</system:String>
     <system:String x:Key="btnAutoHomeComplete">Auto Home Complete</system:String>
@@ -85,6 +88,7 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="botTracking">Tracciamento</system:String>
     <system:String x:Key="botTipTracking">Tracciamento</system:String>
     <system:String x:Key="botTipSOP">Lato del Meridiano</system:String>
+    <system:String x:Key="botTipAzDir">Azimuth slew direction</system:String>
     <system:String x:Key="botTipAxisLimit">Limiti Assi, click per le impostazioni</system:String>
     <system:String x:Key="botTipWarnings">Attenzione, click per resettare</system:String>
     <system:String x:Key="botTipErrors">Errori, click per resttare</system:String>
@@ -99,6 +103,10 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="hcTipN">N</system:String>
     <system:String x:Key="hcTipE">E</system:String>
     <system:String x:Key="hcTipS">S</system:String>
+    <system:String x:Key="hcTipL">S</system:String>
+    <system:String x:Key="hcTipU">A</system:String>
+    <system:String x:Key="hcTipR">D</system:String>
+    <system:String x:Key="hcTipD">B</system:String>
     <system:String x:Key="hcTipStop">Stop</system:String>
     <system:String x:Key="hcSpeed">Velocità</system:String>
     <system:String x:Key="hcTipSpeed">Velocità Movimento</system:String>
@@ -137,12 +145,14 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="mntHomeSensor">Sensore di Home:</system:String>
     <system:String x:Key="mntRaSteps">Ra Steps/Arcsec:</system:String>
     <system:String x:Key="mntDecSteps">Dec Steps/Arcsec:</system:String>
-    <system:String x:Key="mntInfo">informazioni Montatura</system:String>
+    <system:String x:Key="mntInfo">Informazioni Montatura</system:String>
 
     <!--GoTo bar-->
     <system:String x:Key="goAcpCoords">Accetto le Coordinate?</system:String>
     <system:String x:Key="goRa">RA:</system:String>
     <system:String x:Key="goDec">Dec:</system:String>
+    <system:String x:Key="goAz">Az:</system:String>
+    <system:String x:Key="goAlt">Alt:</system:String>
     <system:String x:Key="goCopy">Copy</system:String>
     <system:String x:Key="goTipCopy">Utilizza la posizione Corrente</system:String>
     <system:String x:Key="goGoTo">GoTo</system:String>
@@ -151,7 +161,9 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="goSync">Sync</system:String>
     <system:String x:Key="goSyncWarning">Attenzione: verifica le coordinate!</system:String>
     <system:String x:Key="goSlewing">La Montatura si sta muovendo</system:String>
-    <system:String x:Key="goOutLimits">Outside of Sync limits</system:String>
+    <system:String x:Key="goOutLimits">Al di fuori dei limiti di sincronizzazione</system:String>
+    <system:String x:Key="goChangeToRaDec">Fare clic con il tasto destro per inserire le coordinate Ra Dec</system:String>
+    <system:String x:Key="goChangeToAzAlt">Fare clic con il tasto destro per inserire le coordinate Az Alt</system:String>
 
     <!--Backlash -->
     <system:String x:Key="bacDecLash">Dec Backlash</system:String>
@@ -194,7 +206,7 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="gpsLong">Longitudine:</system:String>
     <system:String x:Key="gpsEle">Elevazione:</system:String>
     <system:String x:Key="gpsAccept">Accetto le Coordinate?</system:String>
-    <system:String x:Key="gpsNoData">Missing or invalid data found on COM port</system:String>
+    <system:String x:Key="gpsNoData">Missing or invalid data found</system:String>
     <system:String x:Key="gpsGGA">GGA</system:String>
     <system:String x:Key="gpsRMC">RMC</system:String>
     <system:String x:Key="gpsLocal">Discrepanza con orario locale</system:String>
@@ -376,13 +388,11 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="skySolarRate">Solare Rate</system:String>
     <system:String x:Key="skyLunarRate">Lunare Rate</system:String>
     <system:String x:Key="skyKingRate">King Rate</system:String>
-    <system:String x:Key="skyStopMount">Stop mount before setting home position</system:String>
     <system:String x:Key="skyConnect">Connetti</system:String>
     <system:String x:Key="skyDisconnect">Disconnetti</system:String>
     <system:String x:Key="skyHome1">Quando si parte normalmente posizionre la montatura in 'Home'.</system:String>
     <system:String x:Key="skyHome2">La Posizione di home è con il contrappeso basso e la declinazione punta verso il Polo.</system:String>
     <system:String x:Key="skyHome2AltAz">La Posizione di home è il telescopio orizzontale che punta verso il nord geografico.</system:String>
-    <system:String x:Key="skyHome3">Clicca 'Imposta Home' prima o dopo aver fatto un allineamento polare.</system:String>
     <system:String x:Key="skyParkNewName">Aggiungi posizione di parcheggio</system:String>
     <system:String x:Key="skyParkDelete">Eliminare la posizione di parcheggio?</system:String>
     <system:String x:Key="skyLat0">Nord o Sud</system:String>
@@ -601,8 +611,9 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="aliClearModelOnStartup">Clear model on startup</system:String>
     <system:String x:Key="aliAlignmentSettings">Settings</system:String>
     <system:String x:Key="aliProximityLimitTooltip">How near to each other can sync points be before they replace earlier points (arc seconds).</system:String>
-    <system:String x:Key="aliSampleSizeTooltip">How many nearby sync points should be used when calculating positions.</system:String>
-    <system:String x:Key="aliNearbyLimitTooltip">How close should sync points be before they are used in calculations (degrees).</system:String>
+    <system:String x:Key="aliAlignmentModeTooltip">Choose whether to use the nearest point or the nearest three points</system:String>
+    <system:String x:Key="aliActivePointsTooltip">Choose whether to consider all points, just points on the same side of the pier or just points in the local quadrant or</system:String>
+    <system:String x:Key="aliThreePointAlgorithmTooltip">How to pick the three points, triangle with closest points or the triangle with the centre nearest.</system:String>
     <system:String x:Key="aliClearModelOnStartupTooltip">Tick if you want to create a fresh model every time you reconnect.</system:String>
     <system:String x:Key="aliClearAll">Elimina Tutto</system:String>
     <system:String x:Key="aliClearAllTooltip">Click this button to clear all alignment points from the model.</system:String>
@@ -610,8 +621,9 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="aliDeleteTooltip">Click this button to delete the selected alignment point.</system:String>
     <system:String x:Key="optAlignment">Allineamento</system:String>
     <system:String x:Key="optProximityLimit">Proximity Limit</system:String>
-    <system:String x:Key="optSampleSize">Sample Size</system:String>
-    <system:String x:Key="optNearbyLimit">Vicino al Limite</system:String>
+    <system:String x:Key="optAlignmentMode">Alignment Behaviour</system:String>
+    <system:String x:Key="optActivePoints">Point Filter</system:String>
+    <system:String x:Key="optThreePointAlgorithm">Three Point Selection</system:String>
 
     <!--1.0.3.2 -->
     <system:String x:Key="customGears">Meccanica costum</system:String>
@@ -630,19 +642,22 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="mntFreqRa">Frequenza Ra:</system:String>
     <system:String x:Key="mntFreqDec">Freqenza Dec:</system:String>
 
-
     <!--1.0.3.4 -->
     <system:String x:Key="btnReSyncEnc">Reimposta Encoders</system:String>
     <system:String x:Key="btnReSyncHome">Posizione Encorder</system:String>
     <system:String x:Key="btnReSyncAccept">Accetta di resettare la posizione della montatura</system:String>
     <system:String x:Key="btnReSync">ReSync</system:String>
     <system:String x:Key="vceSync">Sincronizzato</system:String>
+    <system:String x:Key="skyGlobalStopOn">Global Stop (esc)</system:String>
+    <system:String x:Key="btnCap">External Capabilities</system:String>
+    <system:String x:Key="capCanSetPark">Can Set Park</system:String>
+    <system:String x:Key="skyStopMount">Mount must be stopped</system:String>
 
     <!-- 1.0.3.8 -->
     <system:String x:Key="aliExport">Esporta</system:String>
     <system:String x:Key="aliExportTooltip">Clicca questo bottone per esportale questo modello di puntamento.</system:String>
     <system:String x:Key="aliImport">Importa</system:String>
-    <system:String x:Key="aliImportTooltip">Click this button import a point model that was previously exported.</system:String>
+    <system:String x:Key="aliImportTooltip">Clicca questo bottone per importare un modello di puntamento precedentemente esportato.</system:String>
     <system:String x:Key="aliConfirmClearAllCaption">Elimina punti di Allineamento</system:String>
     <system:String x:Key="aliConfirmClearAllMessage">Accetta di eliminare tutti i punti di Allineamento.</system:String>
     <system:String x:Key="aliConfirmDeleteCaption">Elimina punto di Allineamento</system:String>
@@ -669,7 +684,7 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="focuserDisconnect">Disconnetti</system:String>
     <system:String x:Key="focuserDisconnectTooltip">Disconnetti Focheggiatore</system:String>
     <system:String x:Key="focuserStepSizeHint">Dimensione Passo</system:String>
-    <system:String x:Key="focuserStepSizeTooltip">The focuser position increment for each button press</system:String>
+    <system:String x:Key="focuserStepSizeTooltip">L'incremento della posizione del focheggiatore per ogni pressione del pulsante</system:String>
     <system:String x:Key="focuserSelectTooltip">Seleziona Focheggiatore da connettere</system:String>
     <system:String x:Key="focuserSelectHint">Focheggiatore</system:String>
 
@@ -709,9 +724,9 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
 
     <!-- 1.0.?.? -->
     <system:String x:Key="aliAlertTooltip">Alignment modeling has been switched off due to an unexpectedly large offset.</system:String>
-    <system:String x:Key="aliCancelAlert">Cancel Alignment Alert</system:String>
+    <system:String x:Key="aliCancelAlert">Annulla avviso di allineamento</system:String>
     <system:String x:Key="aliCancelAlertTooltip">Click this button cancel the alignment alert.</system:String>
-    <system:String x:Key="vceAlignmentAlert">Alignment Alert</system:String>
+    <system:String x:Key="vceAlignmentAlert">Avviso di allineamento</system:String>
 
     <!--1.0.6.3 -->
     <system:String x:Key="btnContinueHome">Accetta di uccidere Home</system:String>
@@ -722,5 +737,26 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="optAlignmentWarningThreshold">Soglia di avviso</system:String>
     <system:String x:Key="aliWarningThresholdTooltip">Il livello al quale viene attivato l'avviso di allineamento (multiplo della distanza massima di offset di sincronizzazione registrata).</system:String>
 
+    <!--1.0.7.8 -->
+    <system:String x:Key="optLogPath">Percorso del registro</system:String>
+
+    <!--1.0.7.9 -->
+    <system:String x:Key="snpDither">Dither</system:String>
+    <system:String x:Key="snpDitherOn">Su</system:String>
+    <system:String x:Key="snpPhdOnOff">Acceso spento</system:String>
+    <system:String x:Key="snpIntLoops">Loop di intervallo</system:String>
+    <system:String x:Key="snpHostIp">Ospite/IP</system:String>
+    <system:String x:Key="snpDitPix">Pixel di dithering</system:String>
+    <system:String x:Key="snpSetPix">Sistema i pixel</system:String>
+    <system:String x:Key="snpSetSec">Regola i secondi</system:String>
+    <system:String x:Key="snpTimeSec">Secondi di timeout</system:String>
+
+    <!--1.0.8.5 -->
+    <system:String x:Key="Meridian">Meridiano</system:String>
+    <system:String x:Key="Horizon">Orizzonte</system:String>
+
+    <!--1.0.8.6 -->
+    <system:String x:Key="HomeDialog">Home Dialogo attivo</system:String>
+    <system:String x:Key="ParkDialog">Park Dialogo attivo</system:String>
 </ResourceDictionary>
  

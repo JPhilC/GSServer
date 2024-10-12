@@ -85,6 +85,10 @@ namespace GS.SkyApi
 
             ValidateMount();
             var validAxis = ValidateAxis(axis);
+            if (validAxis == AxisId.Axis1)
+            {
+                targetPosition = SkyServer.ConvertToAzEastWest(targetPosition);
+            }
             var command = new SkyAxisGoToTarget(SkyQueue.NewId, validAxis, targetPosition);
             GetResult(command);
         }
@@ -111,7 +115,7 @@ namespace GS.SkyApi
 
             ValidateMount();
             var validAxis = ValidateAxis(axis);
-            var command = new SkyAxisPulse(SkyQueue.NewId, validAxis, guideRate, duration, backlashSteps);
+            var command = new SkyAxisPulse(SkyQueue.NewId, validAxis, guideRate, duration, backlashSteps, new CancellationToken());
             GetResult(command);
         }
 
@@ -352,7 +356,7 @@ namespace GS.SkyApi
         {
             ValidateMount();
             var validAxis = ValidateAxis(axis);
-            var command = new SkyGet_j(SkyQueue.NewId, validAxis, raw);
+            var command = new SkyGetJ(SkyQueue.NewId, validAxis, raw);
             var results = GetResult(command);
             return results.Result;
         }
@@ -685,8 +689,8 @@ namespace GS.SkyApi
         {
             get
             {
-                var error = SkyServer.LastAutoHomeError.Message;
-                return string.IsNullOrEmpty(error) ? string.Empty : error;
+                if (string.IsNullOrEmpty(SkyServer.LastAutoHomeError.Message)) return string.Empty;
+                return SkyServer.LastAutoHomeError.Message;
             }
         }
         

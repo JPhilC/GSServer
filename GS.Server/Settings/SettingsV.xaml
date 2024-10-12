@@ -141,11 +141,14 @@
                             <ItemsControl FontFamily="Segoe UI" FontSize="8" Foreground="DarkSeaGreen" ItemsSource="{Binding Path=MonitorEntries}" Style="{StaticResource LogViewerStyle}"/>
                         </Border>
                         <StackPanel Orientation="Horizontal" Grid.Row="5" VerticalAlignment="Top" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" >
+                            <Button Margin="5,0,5,0" Command="{Binding OpenFolderDialogCmd}" Style="{StaticResource MaterialDesignFlatButton}" ToolTip="{StaticResource optLogPath}" >
+                                <md:PackIcon Kind="FolderEdit" Width="29" Height="29" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Button>
+                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0">
                                 <CheckBox IsChecked="{Binding SessionLog}" Style="{StaticResource MaterialDesignCheckBox}"/>
                                 <TextBlock Width="Auto" ToolTip="{StaticResource optSessionLog}" Margin="5 0" VerticalAlignment="Center" Text="{StaticResource optSessionLog}"/>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" >
+                            <StackPanel Orientation="Horizontal" Margin="5,0,5,0">
                                 <CheckBox IsChecked="{Binding MonitorToFile}" Style="{StaticResource MaterialDesignCheckBox}"/>
                                 <TextBlock Width="Auto" Margin="5 0" VerticalAlignment="Center" ToolTip="{StaticResource optWriteFile}" Text="{StaticResource optLogFile}"/>
                             </StackPanel>
@@ -226,7 +229,7 @@
                                     <TextBlock Margin="10 0" VerticalAlignment="Center" Text="{StaticResource tabFocuser}"/>
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Width="Auto">
-                                    <CheckBox Height="25" Width="25" IsChecked="{Binding AlignmentTabVisible}" Style="{StaticResource MaterialDesignActionLightToggleButton}" ToolTip="{StaticResource aliAlignment}"/>
+                                    <CheckBox Height="25" Width="25" IsChecked="{Binding AlignmentTabVisible}" Style="{StaticResource MaterialDesignActionLightToggleButton}" ToolTip="{StaticResource aliAlignment}" IsEnabled="{Binding AlignmentOptionEnabled}"/>
                                     <TextBlock Margin="10 0" VerticalAlignment="Center" Text="{StaticResource aliAlignment}"/>
                                 </StackPanel>
                             </StackPanel>
@@ -247,6 +250,14 @@
                                 <StackPanel Orientation="Horizontal">
                                     <CheckBox Height="25" Width="25" IsChecked="{Binding HomeWarning}" Style="{StaticResource MaterialDesignActionLightToggleButton}" ToolTip="{StaticResource optHomeWarning}"/>
                                     <TextBlock Margin="10 0" VerticalAlignment="Center" Text="{StaticResource optHomeWarning}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Height="25" Width="25" IsChecked="{Binding HomeDialog}" Style="{StaticResource MaterialDesignActionLightToggleButton}" ToolTip="{StaticResource HomeDialog}"/>
+                                    <TextBlock Margin="10 0" VerticalAlignment="Center" Text="{StaticResource HomeDialog}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Height="25" Width="25" IsChecked="{Binding ParkDialog}" Style="{StaticResource MaterialDesignActionLightToggleButton}" ToolTip="{StaticResource ParkDialog}"/>
+                                    <TextBlock Margin="10 0" VerticalAlignment="Center" Text="{StaticResource ParkDialog}"/>
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Vertical" HorizontalAlignment="Left">
@@ -398,7 +409,7 @@
                                     <Button Margin="0,10,0,0" Height="30" ToolTip="{StaticResource optCheckUpdates}" Style="{StaticResource MaterialDesignRaisedDarkButton}" Command="{Binding OpenUpdateDialogCmd}" Content="{StaticResource optCheckUpdates}">
                                     </Button>
                                 </md:DialogHost>
-                                <Button Margin="0,10,0,0" Height="30" ToolTip="{StaticResource optCheckUpdates}" Style="{StaticResource MaterialDesignRaisedDarkButton}" Command="{Binding ClickUtilCmd}" Content="GS.Utilities.exe">
+                                <Button Margin="0,10,0,0" Height="30" ToolTip="GS.Utilities.exe" Style="{StaticResource MaterialDesignRaisedDarkButton}" Command="{Binding ClickUtilCmd}" Content="GS.Utilities.exe">
                                 </Button>
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="3" Orientation="Vertical" HorizontalAlignment="Left" Margin="0,0,0,0">

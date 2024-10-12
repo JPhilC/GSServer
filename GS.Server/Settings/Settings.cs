@@ -23,7 +23,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media.Media3D;
-using GS.Principles;
 
 namespace GS.Server.Settings
 {
@@ -189,6 +188,21 @@ namespace GS.Server.Settings
                 if (_model3d == value) return;
                 _model3d = value;
                 Properties.Server.Default.Model3D = value;
+                LogSetting(MethodBase.GetCurrentMethod()?.Name, $"{value}");
+                OnStaticPropertyChanged();
+            }
+        }
+
+        private static int _modelIntFactor;
+        public static int ModelIntFactor
+        {
+            get => _modelIntFactor;
+            set
+            {
+                if (value < 1 || value > 20) { return; }
+                if (_modelIntFactor == value) { return; }
+                _modelIntFactor = value;
+                Properties.Server.Default.ModelIntFactor = value;
                 LogSetting(MethodBase.GetCurrentMethod()?.Name, $"{value}");
                 OnStaticPropertyChanged();
             }
@@ -594,6 +608,7 @@ namespace GS.Server.Settings
             Notes = Properties.Server.Default.Notes;
             SkyWatcher = Properties.Server.Default.SkyWatcher;
             Model3D = Properties.Server.Default.Model3D;
+            ModelIntFactor = Properties.Server.Default.ModelIntFactor;
             ModelLookDirection1 = Vector3D.Parse(Properties.Server.Default.ModelLookDirection1);
             ModelPosition1 = Point3D.Parse(Properties.Server.Default.ModelPosition1);
             ModelUpDirection1 = Vector3D.Parse(Properties.Server.Default.ModelUpDirection1);

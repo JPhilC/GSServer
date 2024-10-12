@@ -41,6 +41,7 @@ using GS.Server.Snap;
 using GS.Server.Alignment;
 using MaterialDesignColors;
 using System.Threading.Tasks;
+using ASCOM.DeviceInterface;
 
 namespace GS.Server.Main
 {
@@ -63,7 +64,6 @@ namespace GS.Server.Main
         private SnapVM _snapVM;
         private AlignmentVM _alignmentVM;
         public static MainWindowVM _mainWindowVm;
-
         private double _tempHeight = 510;
         private double _tempWidth = 850;
         private WindowState _tempWindowState = WindowState.Normal;
@@ -387,7 +387,7 @@ namespace GS.Server.Main
                     }
                     break;
                 case "Alignment":
-                    if (Settings.Settings.AlignmentTabVisible)
+                    if (SkySettings.AlignmentMode != AlignmentModes.algAltAz && Settings.Settings.AlignmentTabVisible)
                     {
                         if (!PageViewModels.Contains(_alignmentVM))
                         {
@@ -421,13 +421,13 @@ namespace GS.Server.Main
         public IPageVM CurrentPageViewModel
         {
             get => _currentPageViewModel;
-            set
+            private set
             {
                 using (new WaitCursor())
                 {
                     if (_currentPageViewModel == value) return;
                     _currentPageViewModel = value;
-                    //Memory.Collect();
+                    SkyServer.SelectedTab = value;
                     OnPropertyChanged();
                 }
             }
@@ -816,7 +816,6 @@ namespace GS.Server.Main
             }
         }
 
-
         private MountType _mountType;
         public MountType MountType
         {
@@ -833,8 +832,7 @@ namespace GS.Server.Main
                 OnPropertyChanged("MountTypeColor");
             }
         }
-
-
+        
         public Brush MountTypeColor
         {
             get
@@ -858,7 +856,6 @@ namespace GS.Server.Main
                 return accentbrush;
             }
         }
-
 
         private bool _topMost;
         public bool TopMost

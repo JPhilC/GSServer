@@ -10,12 +10,22 @@
              xmlns:deviceInterface="clr-namespace:ASCOM.DeviceInterface;assembly=ASCOM.DeviceInterfaces"
              xmlns:controls="clr-namespace:GS.Server.Controls"
              xmlns:domain1="clr-namespace:GS.Shared.Domain;assembly=GS.Shared"
+             xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance skyTelescope:SkyTelescopeVM}">
+    <b:Interaction.Triggers>
+        <b:EventTrigger EventName="PreviewKeyDown">
+            <b:InvokeCommandAction Command="{Binding PressKeyDownCmd}" PassEventArgsToCommand="True" />
+        </b:EventTrigger>
+        <b:EventTrigger EventName="PreviewKeyUp">
+            <b:InvokeCommandAction Command="{Binding PressKeyReleaseCmd}" PassEventArgsToCommand="True" />
+        </b:EventTrigger>
+    </b:Interaction.Triggers>
     <UserControl.Resources>
         <domain:ComparisonConverter x:Key="Compare" />
         <domain:InverseBooleanConverter x:Key="InvertBool" />
         <domain:EnumToVisibilityConverter x:Key="EnumToVis" />
+        <domain:BoolToVisClapConverter x:Key="BoolToVisClap"/>
         <domain1:EnumValueToDescriptionConverter x:Key="EnumToDesc" />
     </UserControl.Resources>
     <md:DialogHost IsOpen="{Binding IsDialogOpen}" DialogContent="{Binding DialogContent}" CloseOnClickAway="True"  >
@@ -461,11 +471,11 @@
                                     Background="{StaticResource MaterialDesignToolBarBackground}"  >
                                 <Grid Margin="10,0,10,10">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -681,7 +691,8 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Orientation="Vertical" Grid.Row="0" Grid.Column="0">
-                            <controls:RaDecGoTo />
+                            <controls:RaDecGoTo x:Name="RaDecGoTo" Visibility="{Binding RaDecDialogActive, Converter={StaticResource BoolToVisClap}}" MouseRightButtonDown="GoToDialog_OnMouseRightButtonDown"/>
+                            <controls:AltAzGoTo x:Name="AltAzGoTo" Visibility="{Binding AltAzDialogActive, Converter={StaticResource BoolToVisClap}}" MouseRightButtonDown="GoToDialog_OnMouseRightButtonDown"/>
                             <controls:HandController Margin="0,5,10,0"  />
                             <controls:Backlash />
                             <controls:PPecBar/>

@@ -7,12 +7,15 @@
              xmlns:skyTelescope="clr-namespace:GS.Server.SkyTelescope"
              xmlns:domain="clr-namespace:GS.Shared.Domain;assembly=GS.Shared"
              xmlns:b="http://schemas.microsoft.com/xaml/behaviors" mc:Ignorable="d" d:DataContext="{d:DesignInstance skyTelescope:SkyTelescopeVM}">
-    <b:Interaction.Triggers>
-        <!--Stop Mouse Lock-->
+    <!--<b:Interaction.Triggers>
+        --><!--Stop Mouse Lock--><!--
         <b:EventTrigger EventName="PreviewKeyDown">
-            <b:InvokeCommandAction Command="{Binding PressAnyKeyDownCmd}" CommandParameter="stop" />
+            <b:InvokeCommandAction Command="{Binding PressKeyDownCmd}" PassEventArgsToCommand="True" />
         </b:EventTrigger>
-    </b:Interaction.Triggers>
+        <b:EventTrigger EventName="PreviewKeyUp">
+            <b:InvokeCommandAction Command="{Binding PressKeyReleaseCmd}" PassEventArgsToCommand="True" />
+        </b:EventTrigger>
+    </b:Interaction.Triggers>-->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
     </UserControl.Resources>
@@ -28,14 +31,17 @@
                 <ColumnDefinition />
                 <ColumnDefinition />
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition />
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <!--<md:DialogHost HorizontalAlignment="Center" CloseOnClickAway="True" IsOpen="{Binding IsDialogOpen}" DialogContent="{Binding DialogContent}" Background="Transparent" />-->
             <Button Grid.Row="0" Grid.Column="0" Width="20" Height="20" ToolTip="{StaticResource hcOpenWin}" Command="{Binding OpenHCWindowCmd}" Style="{StaticResource MaterialDesignRaisedAccentButton}" VerticalAlignment="Top" HorizontalAlignment="Left" HorizontalContentAlignment="Left" VerticalContentAlignment="Top" 
                     Visibility="{Binding HcWinVisibility, Converter={StaticResource BoolToVis}}">
                 <md:PackIcon Kind="OpenInNew" Margin="-14,-2,0,0" />
             </Button>
-            <Button Grid.Row="1" Grid.Column="0" Width="50" Height="50" ToolTipService.Placement="Center" ToolTip="{StaticResource hcTipW}">
+            <Button Grid.Row="1" Grid.Column="0" Width="50" Height="50" ToolTipService.Placement="Center">
+                <Button.ToolTip>
+                    <TextBlock Text="{Binding HcToolTipW}" />
+                </Button.ToolTip>
                 <b:Interaction.Triggers>
                     <b:EventTrigger EventName="PreviewMouseLeftButtonDown">
                         <b:InvokeCommandAction Command="{Binding HcMouseDownLeftCommand}" PassEventArgsToCommand="True" />
@@ -46,7 +52,10 @@
                 </b:Interaction.Triggers>
                 <md:PackIcon Kind="ArrowLeft" />
             </Button>
-            <Button Grid.Row="0" Grid.Column="1" Width="50" Height="50" ToolTipService.Placement="Center" ToolTip="{StaticResource hcTipN}">
+            <Button Grid.Row="0" Grid.Column="1" Width="50" Height="50" ToolTipService.Placement="Center">
+                <Button.ToolTip>
+                    <TextBlock Text="{Binding HcToolTipN}" />
+                </Button.ToolTip>
                 <b:Interaction.Triggers>
                     <b:EventTrigger EventName="PreviewMouseLeftButtonDown">
                         <b:InvokeCommandAction Command="{Binding HcMouseDownUpCommand}" PassEventArgsToCommand="True" />
@@ -57,7 +66,10 @@
                 </b:Interaction.Triggers>
                 <md:PackIcon Kind="ArrowUp" />
             </Button>
-            <Button Grid.Row="1" Grid.Column="2" Width="50" Height="50" ToolTipService.Placement="Center" ToolTip="{StaticResource hcTipE}">
+            <Button Grid.Row="1" Grid.Column="2" Width="50" Height="50" ToolTipService.Placement="Center">
+                <Button.ToolTip>
+                    <TextBlock Text="{Binding HcToolTipE}" />
+                </Button.ToolTip>
                 <b:Interaction.Triggers>
                     <b:EventTrigger EventName="PreviewMouseLeftButtonDown">
                         <b:InvokeCommandAction Command="{Binding HcMouseDownRightCommand}" PassEventArgsToCommand="True" />
@@ -68,7 +80,10 @@
                 </b:Interaction.Triggers>
                 <md:PackIcon Kind="ArrowRight" />
             </Button>
-            <Button Grid.Row="2" Grid.Column="1" Width="50" Height="50" ToolTipService.Placement="Center" ToolTip="{StaticResource hcTipS}">
+            <Button Grid.Row="2" Grid.Column="1" Width="50" Height="50" ToolTipService.Placement="Center">
+                <Button.ToolTip>
+                    <TextBlock Text="{Binding HcToolTipS}" />
+                </Button.ToolTip>
                 <b:Interaction.Triggers>
                     <b:EventTrigger EventName="PreviewMouseLeftButtonDown">
                         <b:InvokeCommandAction Command="{Binding HcMouseDownDownCommand}" PassEventArgsToCommand="True" />

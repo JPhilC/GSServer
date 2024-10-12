@@ -14,6 +14,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 using System;
+using System.Threading;
 
 namespace GS.SkyWatcher
 {
@@ -108,15 +109,17 @@ namespace GS.SkyWatcher
         private readonly double _guideRate;
         private readonly int _duration;
         private readonly int _backlashSteps;
+        private readonly CancellationToken _token;
         //private readonly double _declination;
 
-        public SkyAxisPulse(long id, AxisId axis, double guideRate, int duration, int backlashSteps = 0)
+        public SkyAxisPulse(long id, AxisId axis, double guideRate, int duration, int backlashSteps, CancellationToken token)
         {
             Id = id;
             _axis = axis;
             _guideRate = guideRate;
             _duration = duration;
             _backlashSteps = backlashSteps;
+            _token = token;
             //_declination = declination;
             CreatedUtc = Principles.HiResDateTime.UtcNow;
             Successful = false;
@@ -128,7 +131,7 @@ namespace GS.SkyWatcher
         {
             try
             {
-                skyWatcher.AxisPulse(_axis, _guideRate, _duration, _backlashSteps);
+                skyWatcher.AxisPulse(_axis, _guideRate, _duration, _backlashSteps, _token);
                 Successful = true;
             }
             catch (Exception e)
@@ -628,36 +631,36 @@ namespace GS.SkyWatcher
         }
     }
 
-    public class SkyGetAlternatingPPec : ISkyCommand
-    {
-        public long Id { get; }
-        public DateTime CreatedUtc { get; }
-        public bool Successful { get; set; }
-        public Exception Exception { get; set; }
-        public dynamic Result { get; private set; }
+    //public class SkyGetAlternatingPPec : ISkyCommand
+    //{
+    //    public long Id { get; }
+    //    public DateTime CreatedUtc { get; }
+    //    public bool Successful { get; set; }
+    //    public Exception Exception { get; set; }
+    //    public dynamic Result { get; private set; }
 
-        public SkyGetAlternatingPPec(long id)
-        {
-            Id = id;
-            CreatedUtc = Principles.HiResDateTime.UtcNow;
-            Successful = false;
-            SkyQueue.AddCommand(this);
-        }
+    //    public SkyGetAlternatingPPec(long id)
+    //    {
+    //        Id = id;
+    //        CreatedUtc = Principles.HiResDateTime.UtcNow;
+    //        Successful = false;
+    //        SkyQueue.AddCommand(this);
+    //    }
 
-        public void Execute(SkyWatcher skyWatcher)
-        {
-            try
-            {
-                Result = skyWatcher.AlternatingPPec;
-                Successful = true;
-            }
-            catch (Exception e)
-            {
-                Successful = false;
-                Exception = e;
-            }
-        }
-    }
+    //    public void Execute(SkyWatcher skyWatcher)
+    //    {
+    //        try
+    //        {
+    //            Result = skyWatcher.AlternatingPPec;
+    //            Successful = true;
+    //        }
+    //        catch (Exception e)
+    //        {
+    //            Successful = false;
+    //            Exception = e;
+    //        }
+    //    }
+    //}
 
     public class SkyGetAngleToStep : ISkyCommand
     {
@@ -859,69 +862,69 @@ namespace GS.SkyWatcher
         }
     }
 
-    public class SkyGetCacheAxisStatus : ISkyCommand
-    {
-        public long Id { get; }
-        public DateTime CreatedUtc { get; }
-        public bool Successful { get; set; }
-        public Exception Exception { get; set; }
-        public dynamic Result { get; private set; }
-        private readonly AxisId _axis;
+    //public class SkyGetCacheAxisStatus : ISkyCommand
+    //{
+    //    public long Id { get; }
+    //    public DateTime CreatedUtc { get; }
+    //    public bool Successful { get; set; }
+    //    public Exception Exception { get; set; }
+    //    public dynamic Result { get; private set; }
+    //    private readonly AxisId _axis;
 
-        public SkyGetCacheAxisStatus(long id, AxisId axis)
-        {
-            Id = id;
-            _axis = axis;
-            CreatedUtc = Principles.HiResDateTime.UtcNow;
-            Successful = false;
-            SkyQueue.AddCommand(this);
-        }
+    //    public SkyGetCacheAxisStatus(long id, AxisId axis)
+    //    {
+    //        Id = id;
+    //        _axis = axis;
+    //        CreatedUtc = Principles.HiResDateTime.UtcNow;
+    //        Successful = false;
+    //        SkyQueue.AddCommand(this);
+    //    }
 
-        public void Execute(SkyWatcher skyWatcher)
-        {
-            try
-            {
-                Result = skyWatcher.GetCacheAxisStatus(_axis);
-                Successful = true;
-            }
-            catch (Exception e)
-            {
-                Successful = false;
-                Exception = e;
-            }
-        }
-    }
+    //    public void Execute(SkyWatcher skyWatcher)
+    //    {
+    //        try
+    //        {
+    //            Result = skyWatcher.GetCacheAxisStatus(_axis);
+    //            Successful = true;
+    //        }
+    //        catch (Exception e)
+    //        {
+    //            Successful = false;
+    //            Exception = e;
+    //        }
+    //    }
+    //}
 
-    public class SkyGetDecPulseToGoTo : ISkyCommand
-    {
-        public long Id { get; }
-        public DateTime CreatedUtc { get; }
-        public bool Successful { get; set; }
-        public Exception Exception { get; set; }
-        public dynamic Result { get; private set; }
+    //public class SkyGetDecPulseToGoTo : ISkyCommand
+    //{
+    //    public long Id { get; }
+    //    public DateTime CreatedUtc { get; }
+    //    public bool Successful { get; set; }
+    //    public Exception Exception { get; set; }
+    //    public dynamic Result { get; private set; }
 
-        public SkyGetDecPulseToGoTo(long id)
-        {
-            Id = id;
-            CreatedUtc = Principles.HiResDateTime.UtcNow;
-            Successful = false;
-            SkyQueue.AddCommand(this);
-        }
+    //    public SkyGetDecPulseToGoTo(long id)
+    //    {
+    //        Id = id;
+    //        CreatedUtc = Principles.HiResDateTime.UtcNow;
+    //        Successful = false;
+    //        SkyQueue.AddCommand(this);
+    //    }
 
-        public void Execute(SkyWatcher skyWatcher)
-        {
-            try
-            {
-                Result = skyWatcher.DecPulseGoTo;
-                Successful = true;
-            }
-            catch (Exception e)
-            {
-                Successful = false;
-                Exception = e;
-            }
-        }
-    }
+    //    public void Execute(SkyWatcher skyWatcher)
+    //    {
+    //        try
+    //        {
+    //            Result = skyWatcher.DecPulseGoTo;
+    //            Successful = true;
+    //        }
+    //        catch (Exception e)
+    //        {
+    //            Successful = false;
+    //            Exception = e;
+    //        }
+    //    }
+    //}
 
     public class SkyGetEncoderCount : ISkyCommand
     {
@@ -956,7 +959,7 @@ namespace GS.SkyWatcher
         }
     }
 
-    public class SkyGet_j: ISkyCommand
+    public class SkyGetJ: ISkyCommand
     {
         public long Id { get; }
         public DateTime CreatedUtc { get; }
@@ -966,7 +969,7 @@ namespace GS.SkyWatcher
         private readonly AxisId _axis;
         private readonly bool _raw;
 
-        public SkyGet_j(long id, AxisId axis, bool raw)
+        public SkyGetJ(long id, AxisId axis, bool raw)
         {
             Id = id;
             _axis = axis;

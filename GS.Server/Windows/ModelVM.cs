@@ -118,6 +118,8 @@ namespace GS.Server.Windows
                          break;
                      case "RightAscensionXForm":
                          RightAscension = _util.HoursToHMS(SkyServer.RightAscensionXForm, "h ", ":", "", 2);
+                         break;
+                     case "Rotate3DModel":
                          Rotate();
                          break;
                      case "DeclinationXForm":

@@ -514,5 +514,17 @@ namespace GS.Server.Properties {
                 this["YAxisCentre"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int ModelIntFactor {
+            get {
+                return ((int)(this["ModelIntFactor"]));
+            }
+            set {
+                this["ModelIntFactor"] = value;
+            }
+        }
     }
 }

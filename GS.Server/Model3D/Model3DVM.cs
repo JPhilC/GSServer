@@ -23,6 +23,7 @@ using HelixToolkit.Wpf;
 using MaterialDesignColors;
 using MaterialDesignThemes.Wpf;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -56,6 +57,7 @@ namespace GS.Server.Model3D
 
             SkyServer.StaticPropertyChanged += PropertyChangedSkyServer;
             Settings.Settings.StaticPropertyChanged += PropertyChangedSettings;
+            SkySettings.StaticPropertyChanged += PropertyChangedSkySettings;
 
             LookDirection = Settings.Settings.ModelLookDirection1;
             UpDirection = Settings.Settings.ModelUpDirection1;
@@ -64,6 +66,8 @@ namespace GS.Server.Model3D
             LoadTopBar();
             LoadGEM();
             Rotate();
+
+            FactorList = new List<int>(Enumerable.Range(1, 21));
 
             ActualAxisX = "--.--";
             ActualAxisY = "--.--";
@@ -78,6 +82,9 @@ namespace GS.Server.Model3D
             ScreenEnabled = SkyServer.IsMountRunning;
             ModelWinVisibility = true;
             ModelType = Settings.Settings.ModelType;
+            Interval = SkySettings.DisplayInterval;
+            ModelFactor = Settings.Settings.ModelIntFactor;
+
         }
 
         #region ViewModel
@@ -90,6 +97,7 @@ namespace GS.Server.Model3D
         {
             try
             {
+                if (!IsCurrentViewModel()){return;}
                 ThreadContext.BeginInvokeOnUiThread(
              delegate
              {
@@ -112,6 +120,8 @@ namespace GS.Server.Model3D
                          break;
                      case "RightAscensionXForm":
                          RightAscension = _util.HoursToHMS(SkyServer.RightAscensionXForm, "h ", ":", "", 2);
+                         break;
+                     case "Rotate3DModel":
                          Rotate();
                          break;
                      case "IsMountRunning":
@@ -160,6 +170,7 @@ namespace GS.Server.Model3D
         {
             try
             {
+                if (!IsCurrentViewModel()) { return; }
                 ThreadContext.BeginInvokeOnUiThread(
                     delegate
                     {
@@ -169,6 +180,9 @@ namespace GS.Server.Model3D
                             case "ModelType":
                                 ModelType = Settings.Settings.ModelType;
                                 LoadGEM();
+                                break;
+                            case "ModelIntFactor":
+                                ModelFactor = Settings.Settings.ModelIntFactor;
                                 break;
                         }
                     });
@@ -189,6 +203,49 @@ namespace GS.Server.Model3D
 
                 SkyServer.AlertState = true;
                 OpenDialog(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Property changes from settings
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void PropertyChangedSkySettings(object sender, PropertyChangedEventArgs e)
+        {
+            try
+            {
+                if (!IsCurrentViewModel()) { return; }
+                ThreadContext.BeginInvokeOnUiThread(
+             delegate
+             {
+                 switch (e.PropertyName)
+                 {
+                     case "AlignmentMode":
+                         OpenResetView();
+                         break;
+                     case "DisplayInterval":
+                         Interval = SkySettings.DisplayInterval;
+                         break;
+                 }
+             });
+            }
+            catch (Exception ex)
+            {
+                var monitorItem = new MonitorEntry
+                {
+                    Datetime = HiResDateTime.UtcNow,
+                    Device = MonitorDevice.UI,
+                    Category = MonitorCategory.Interface,
+                    Type = MonitorType.Error,
+                    Method = MethodBase.GetCurrentMethod()?.Name,
+                    Thread = Thread.CurrentThread.ManagedThreadId,
+                    Message = $"{ex.Message}|{ex.StackTrace}"
+                };
+                MonitorLog.LogToMonitor(monitorItem);
+
+                SkyServer.AlertState = true;
+                OpenDialog(ex.Message, $"{Application.Current.Resources["exError"]}");
             }
         }
 
@@ -360,6 +417,16 @@ namespace GS.Server.Model3D
         
         }
 
+        /// <summary>
+        /// Checks Selected Tab
+        /// </summary>
+        /// <returns></returns>
+        private bool IsCurrentViewModel()
+        {
+            if (SkyServer.SelectedTab?.Uid != 4) { return false; }
+            ScreenEnabled = SkyServer.IsMountRunning;
+            return true;
+        }
         #endregion
 
         #region Viewport3D
@@ -675,6 +742,47 @@ namespace GS.Server.Model3D
             }
         }
 
+        public IList<int> FactorList { get; }
+
+        private int _modelFactor;
+        public int ModelFactor
+        {
+            get => _modelFactor;
+            set
+            {
+                if (_modelFactor == value) {return;}
+                _modelFactor = value;
+                Settings.Settings.ModelIntFactor = value;
+                OnPropertyChanged();
+                IntervalTotal = Interval * value;
+            }
+        }
+
+        private int _Interval;
+        public int Interval
+        {
+            get => SkySettings.DisplayInterval;
+            set
+            {
+                if (value == _Interval) {return;}
+                _Interval = value;
+                OnPropertyChanged();
+                _Interval = value;
+                IntervalTotal = value * ModelFactor;
+            }
+        }
+
+        private double _IntervalTotal;
+        public double IntervalTotal
+        {
+            get => _IntervalTotal;
+            set
+            {
+                _IntervalTotal = value;
+                OnPropertyChanged();
+            }
+        }
+
         private Material _compass;
         public Material Compass
         {
@@ -699,20 +807,6 @@ namespace GS.Server.Model3D
 
                 switch (SkySettings.AlignmentMode)
                 {
-                    case AlignmentModes.algPolar:
-                    case AlignmentModes.algGermanPolar:
-                        //offset for model to match start position
-                        xAxisOffset = 90;
-                        yAxisOffset = -90;
-                        zAxisOffset = 0;
-
-                        //start position
-                        XAxis = -90;
-                        YAxis = 90;
-                        ZAxis = Math.Round(Math.Abs(SkySettings.Latitude), 2);
-                        YAxisCentre = Settings.Settings.YAxisCentre;
-                        GemBlockVisible = true;
-                        break;
                     case AlignmentModes.algAltAz:
                         //offset for model to match start position
                         xAxisOffset = 0;
@@ -725,7 +819,20 @@ namespace GS.Server.Model3D
                         YAxisCentre = 0;
                         GemBlockVisible = false;
                         break;
+                    case AlignmentModes.algPolar:
+                    case AlignmentModes.algGermanPolar:
                     default:
+                        //offset for model to match start position
+                        xAxisOffset = 90;
+                        yAxisOffset = -90;
+                        zAxisOffset = 0;
+
+                        //start position
+                        XAxis = -90;
+                        YAxis = 90;
+                        ZAxis = Math.Round(Math.Abs(SkySettings.Latitude), 2);
+                        YAxisCentre = Settings.Settings.YAxisCentre;
+                        GemBlockVisible = true;
                         break;
                 }
 

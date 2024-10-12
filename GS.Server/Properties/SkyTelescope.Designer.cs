@@ -12,7 +12,7 @@ namespace GS.Server.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.7.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.11.0.0")]
     internal sealed partial class SkyTelescope : global::System.Configuration.ApplicationSettingsBase {
         
         private static SkyTelescope defaultInstance = ((SkyTelescope)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new SkyTelescope())));
@@ -1010,12 +1010,12 @@ namespace GS.Server.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string ParkPositions {
+        public string ParkPositionsEQ {
             get {
-                return ((string)(this["ParkPositions"]));
+                return ((string)(this["ParkPositionsEQ"]));
             }
             set {
-                this["ParkPositions"] = value;
+                this["ParkPositionsEQ"] = value;
             }
         }
         
@@ -1561,7 +1561,7 @@ namespace GS.Server.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2000")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2500")]
         public int AltAzTrackingUpdateInterval {
             get {
                 return ((int)(this["AltAzTrackingUpdateInterval"]));
@@ -1585,6 +1585,54 @@ namespace GS.Server.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double ParkAxisAz {
+            get {
+                return ((double)(this["ParkAxisAz"]));
+            }
+            set {
+                this["ParkAxisAz"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double ParkAxisAlt {
+            get {
+                return ((double)(this["ParkAxisAlt"]));
+            }
+            set {
+                this["ParkAxisAlt"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ParkPositionsAltAz {
+            get {
+                return ((string)(this["ParkPositionsAltAz"]));
+            }
+            set {
+                this["ParkPositionsAltAz"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public string AltAzAxesLimitOn {
+            get {
+                return ((string)(this["AltAzAxesLimitOn"]));
+            }
+            set {
+                this["AltAzAxesLimitOn"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("80")]
         public double AltAxisUpperLimit {
             get {
@@ -1597,13 +1645,97 @@ namespace GS.Server.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("-10")]
         public double AltAxisLowerLimit {
             get {
                 return ((double)(this["AltAxisLowerLimit"]));
             }
             set {
                 this["AltAxisLowerLimit"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("15")]
+        public double AzSlewLimit {
+            get {
+                return ((double)(this["AzSlewLimit"]));
+            }
+            set {
+                this["AzSlewLimit"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool HzLimitTracking {
+            get {
+                return ((bool)(this["HzLimitTracking"]));
+            }
+            set {
+                this["HzLimitTracking"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ParkHzLimitName {
+            get {
+                return ((string)(this["ParkHzLimitName"]));
+            }
+            set {
+                this["ParkHzLimitName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool HzLimitPark {
+            get {
+                return ((bool)(this["HzLimitPark"]));
+            }
+            set {
+                this["HzLimitPark"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double AxisHzTrackingLimit {
+            get {
+                return ((double)(this["AxisHzTrackingLimit"]));
+            }
+            set {
+                this["AxisHzTrackingLimit"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool HomeDialog {
+            get {
+                return ((bool)(this["HomeDialog"]));
+            }
+            set {
+                this["HomeDialog"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ParkDialog {
+            get {
+                return ((bool)(this["ParkDialog"]));
+            }
+            set {
+                this["ParkDialog"] = value;
             }
         }
     }

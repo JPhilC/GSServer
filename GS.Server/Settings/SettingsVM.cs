@@ -37,6 +37,7 @@ using GS.Principles;
 using GS.Server.Controls.Dialogs;
 using GS.Server.Windows;
 using GS.Shared.Command;
+using ASCOM.DeviceInterface;
 
 namespace GS.Server.Settings
 {
@@ -104,6 +105,8 @@ namespace GS.Server.Settings
                     var theme = paletteHelper.GetTheme();
                     theme.SetBaseTheme(Settings.DarkTheme ? Theme.Dark : Theme.Light);
                     paletteHelper.SetTheme(theme);
+
+                    
 
 
                     //Performance
@@ -451,10 +454,21 @@ namespace GS.Server.Settings
 
         public bool AlignmentTabVisible
         {
-            get => Settings.AlignmentTabVisible;
+            get => SkySettings.AlignmentMode != AlignmentModes.algAltAz && Settings.AlignmentTabVisible;
             set
             {
                 Settings.AlignmentTabVisible = value;
+                _mainWindowVm.UpdateTabViewModel("Alignment");
+                OnPropertyChanged();
+            }
+        }
+
+        public bool AlignmentOptionEnabled
+        {
+            get => (SkySettings.AlignmentMode != AlignmentModes.algAltAz);
+            set
+            {
+                Settings.AlignmentTabVisible = (SkySettings.AlignmentMode != AlignmentModes.algAltAz);
                 _mainWindowVm.UpdateTabViewModel("Alignment");
                 OnPropertyChanged();
             }
@@ -638,6 +652,28 @@ namespace GS.Server.Settings
             {
                 if (HomeWarning == value) return;
                 SkySettings.HomeWarning = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool HomeDialog
+        {
+            get => SkySettings.HomeDialog;
+            set
+            {
+                if (HomeDialog == value) return;
+                SkySettings.HomeDialog = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool ParkDialog
+        {
+            get => SkySettings.ParkDialog;
+            set
+            {
+                if (ParkDialog == value) return;
+                SkySettings.ParkDialog = value;
                 OnPropertyChanged();
             }
         }
@@ -1236,6 +1272,52 @@ namespace GS.Server.Settings
             }
         }
 
+        private ICommand _openFolderDialogCmd;
+
+        public ICommand OpenFolderDialogCmd
+        {
+            get
+            {
+                var command = _openFolderDialogCmd;
+                if (command != null)
+                {
+                    return command;
+                }
+
+                return _openFolderDialogCmd = new RelayCommand(
+                    param => OpenFolderDialog()
+                );
+            }
+        }
+
+        private void OpenFolderDialog()
+        {
+            try
+            {
+                using (new WaitCursor())
+                {
+                    var folder = GSFile.GetFolderName(GSFile.GetLogPath());
+                    if(string.IsNullOrEmpty(folder)){ return; }
+                    if (Directory.Exists(folder)) { GSFile.SaveLogPath(folder); }
+                }
+            }
+            catch (Exception ex)
+            {
+                var monitorItem = new MonitorEntry
+                {
+                    Datetime = HiResDateTime.UtcNow,
+                    Device = MonitorDevice.UI,
+                    Category = MonitorCategory.Interface,
+                    Type = MonitorType.Error,
+                    Method = MethodBase.GetCurrentMethod()?.Name,
+                    Thread = Thread.CurrentThread.ManagedThreadId,
+                    Message = $"{ex.Message}"
+                };
+                MonitorLog.LogToMonitor(monitorItem);
+
+                OpenDialog(ex.Message);
+            }
+        }
         #endregion
 
         #region Dialog

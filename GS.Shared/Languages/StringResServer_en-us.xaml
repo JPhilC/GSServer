@@ -13,10 +13,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see<https://www.gnu.org/licenses/> .
 */-->
-<ResourceDictionary 
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
-    xmlns:system="clr-namespace:System;assembly=mscorlib">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:system="clr-namespace:System;assembly=mscorlib">
 
     <!--Title bar-->
     <system:String x:Key="titleName">GS Server</system:String>
@@ -64,8 +61,11 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="btnTipSetHome">Reset axis positions to home</system:String>
     <system:String x:Key="btnFlip">Flip SOP</system:String>
     <system:String x:Key="btnTipFlip">Flip Side of Pier</system:String>
+    <system:String x:Key="btnFlipAzDir">Flip Az Side</system:String>
+    <system:String x:Key="btnTipFlipAzDir">Flip azimuth slew direction</system:String>
     <!--<system:String x:Key="btnHomeReset">Accept to reset mount position to the Home position</system:String>-->
     <system:String x:Key="btnContinueFlip">Accept to flip mount</system:String>
+    <system:String x:Key="btnContinueFlipAzDir">Accept to swap azimuth side. Mount will slew 360 degrees</system:String>
     <system:String x:Key="btnTipParkPos">Park Positions</system:String>
     <system:String x:Key="btnAutoHome">AutoHome</system:String>
     <system:String x:Key="btnAutoHomeComplete">Auto Home Complete</system:String>
@@ -88,6 +88,7 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="botTracking">Tracking</system:String>
     <system:String x:Key="botTipTracking">Tracking</system:String>
     <system:String x:Key="botTipSOP">Side of Pier</system:String>
+    <system:String x:Key="botTipAzDir">Azimuth slew direction</system:String>
     <system:String x:Key="botTipAxisLimit">Axis limit, click for options</system:String>
     <system:String x:Key="botTipWarnings">Warnings, click to reset</system:String>
     <system:String x:Key="botTipErrors">Errors, click to reset</system:String>
@@ -102,6 +103,10 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="hcTipN">N</system:String>
     <system:String x:Key="hcTipE">E</system:String>
     <system:String x:Key="hcTipS">S</system:String>
+    <system:String x:Key="hcTipL">Left</system:String>
+    <system:String x:Key="hcTipU">Up</system:String>
+    <system:String x:Key="hcTipR">Right</system:String>
+    <system:String x:Key="hcTipD">Down</system:String>
     <system:String x:Key="hcTipStop">Stop</system:String>
     <system:String x:Key="hcSpeed">Speed</system:String>
     <system:String x:Key="hcTipSpeed">Slew Speed</system:String>
@@ -146,6 +151,8 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="goAcpCoords">Accept Coordinates?</system:String>
     <system:String x:Key="goRa">RA:</system:String>
     <system:String x:Key="goDec">Dec:</system:String>
+    <system:String x:Key="goAz">Az:</system:String>
+    <system:String x:Key="goAlt">Alt:</system:String>
     <system:String x:Key="goCopy">Copy</system:String>
     <system:String x:Key="goTipCopy">Fill with current position</system:String>
     <system:String x:Key="goGoTo">GoTo</system:String>
@@ -155,6 +162,8 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="goSyncWarning">Warning: please verify coordinates!</system:String>
     <system:String x:Key="goSlewing">Mount is slewing</system:String>
     <system:String x:Key="goOutLimits">Outside of Sync limits</system:String>
+    <system:String x:Key="goChangeToRaDec">Right click to enter Ra Dec coordinates</system:String>
+    <system:String x:Key="goChangeToAzAlt">Right click to enter Az Alt coordinates</system:String>
 
     <!--Backlash -->
     <system:String x:Key="bacDecLash">Dec Backlash</system:String>
@@ -197,7 +206,7 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="gpsLong">Longitude:</system:String>
     <system:String x:Key="gpsEle">Elevation:</system:String>
     <system:String x:Key="gpsAccept">Accept Coordinates?</system:String>
-    <system:String x:Key="gpsNoData">Missing or invalid data found on COM port</system:String>
+    <system:String x:Key="gpsNoData">Missing or invalid data found</system:String>
     <system:String x:Key="gpsGGA">GGA</system:String>
     <system:String x:Key="gpsRMC">RMC</system:String>
     <system:String x:Key="gpsLocal">Local Time Discrepancy</system:String>
@@ -633,7 +642,6 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="mntFreqRa">Frequency Ra:</system:String>
     <system:String x:Key="mntFreqDec">Frequency Dec:</system:String>
 
-
     <!--1.0.3.4 -->
     <system:String x:Key="btnReSyncEnc">ReSync Encoders</system:String>
     <system:String x:Key="btnReSyncHome">Home Position</system:String>
@@ -729,6 +737,26 @@ along with this program.  If not, see<https://www.gnu.org/licenses/> .
     <system:String x:Key="optAlignmentWarningThreshold">Warning Threshold</system:String>
     <system:String x:Key="aliWarningThresholdTooltip">The level at which the alignment warning is triggered (multiplier of maximum synchronisation offset distance registered).</system:String>
 
+    <!--1.0.7.8 -->
+    <system:String x:Key="optLogPath">Log Path</system:String>
 
+    <!--1.0.7.9 -->
+    <system:String x:Key="snpDither">Dither</system:String>
+    <system:String x:Key="snpDitherOn">On</system:String>
+    <system:String x:Key="snpPhdOnOff">On/Off</system:String>
+    <system:String x:Key="snpIntLoops">Interval Loops</system:String>
+    <system:String x:Key="snpHostIp">Host / IP</system:String>
+    <system:String x:Key="snpDitPix">Dither Pixels</system:String>
+    <system:String x:Key="snpSetPix">Settle Pixels</system:String>
+    <system:String x:Key="snpSetSec">Settle Seconds</system:String>
+    <system:String x:Key="snpTimeSec">Timeout Seconds</system:String>
+
+    <!--1.0.8.5 -->
+    <system:String x:Key="Meridian">Meridian</system:String>
+    <system:String x:Key="Horizon">Horizon</system:String>
+
+    <!--1.0.8.6 -->
+    <system:String x:Key="HomeDialog">Home Dialog On</system:String>
+    <system:String x:Key="ParkDialog">Park Dialog On</system:String>
 </ResourceDictionary>
  
