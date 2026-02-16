@@ -7,7 +7,7 @@ namespace GS.Server.Alignment
         /// <summary>
         /// Fit the pointing model using the supplied alignment points.
         /// </summary>
-        void Fit(IEnumerable<AlignmentPoint> points);
+        void Fit(IReadOnlyList<AlignmentPoint> points);
 
         /// <summary>
         /// Apply the pointing model to the ideal mount position (in degrees)
@@ -16,8 +16,8 @@ namespace GS.Server.Alignment
         AxisPosition Apply(AxisPosition ideal, double hourAngle);
 
         /// <summary>
-        /// Apply the pointing model to the correct mount position (in degrees)
-        /// and return the ideal mount position (in degrees).
+        /// Apply the inverse pointing model to a mount-reported axis position
+        /// (in degrees) and return the corresponding ideal axis position.
         /// </summary>
         AxisPosition ApplyReverse(AxisPosition corrected, double hourAngle);
 
@@ -25,6 +25,13 @@ namespace GS.Server.Alignment
         /// True if the model has been fitted and is ready to use.
         /// </summary>
         bool IsFitted { get; }
+
+        /// <summary>
+        /// Reset the pointing model to its initial, unfitted state.
+        /// After calling this, the model must be fitted again before
+        /// Apply or ApplyReverse can be used.
+        /// </summary>
+        void Reset();
     }
 
 }

@@ -42,7 +42,7 @@ namespace GS.Server.Alignment
             get { return _pAz != null && _pAlt != null; }
         }
 
-        public void Fit(IEnumerable<AlignmentPoint> points)
+        public void Fit(IReadOnlyList<AlignmentPoint> points)
         {
             var list = points.ToList();
             int N = list.Count;
@@ -92,7 +92,7 @@ namespace GS.Server.Alignment
                 ideal.A2 + dAlt
             );
 
-            return corrected.FromRad();
+            return corrected.ToDeg();
         }
 
         public AxisPosition ApplyReverse(AxisPosition correctedDeg, double hourAngle)
@@ -113,7 +113,13 @@ namespace GS.Server.Alignment
                 corrected.A2 - dAlt
             );
 
-            return ideal.FromRad();
+            return ideal.ToDeg();
+        }
+
+        public void Reset()
+        {
+            _pAz = null;
+            _pAlt = null;
         }
 
 

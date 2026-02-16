@@ -14,7 +14,7 @@ namespace GS.Server.Alignment
             get { return _pHa != null && _pDec != null; }
         }
 
-        public void Fit(IEnumerable<AlignmentPoint> points)
+        public void Fit(IReadOnlyList<AlignmentPoint> points)
         {
             var list = points.ToList();
             int N = list.Count;
@@ -65,7 +65,7 @@ namespace GS.Server.Alignment
                 ideal.A2 + dDec
             );
 
-            return corrected.FromRad();
+            return corrected.ToDeg();
         }
 
         public AxisPosition ApplyReverse(AxisPosition correctedDeg, double hourAngle)
@@ -83,7 +83,13 @@ namespace GS.Server.Alignment
                 corrected.A2 - dDec
             );
 
-            return ideal.FromRad();
+            return ideal.ToDeg();
+        }
+
+        public void Reset()
+        {
+            _pHa = null;
+            _pDec = null;
         }
 
         private double EvaluateDeltaHa(AxisPositionRad m)

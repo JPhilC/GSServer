@@ -104,7 +104,7 @@ namespace GS.Server.Alignment
         {
             get
             {
-                if (index < 0 || index > 2)
+                if (index < 0 || index > 1)
                 {
                     throw new ArgumentOutOfRangeException();
                 }
@@ -112,7 +112,7 @@ namespace GS.Server.Alignment
             }
             set
             {
-                if (index < 0 || index > 2)
+                if (index < 0 || index > 1)
                 {
                     throw new ArgumentOutOfRangeException();
                 }
@@ -171,7 +171,7 @@ namespace GS.Server.Alignment
 
         public bool Equals(AxisPosition obj, double toleranceDegrees)
         {
-            var deltaRa = Math.Abs(obj.A1 - A1);
+            var deltaRa = obj.A1 - A1;
             deltaRa = (deltaRa + 180) % 360 - 180;
             var deltaDec = Math.Abs(obj.A2 - A2);
             deltaDec = (deltaDec + 180) % 360 - 180;
@@ -208,21 +208,30 @@ namespace GS.Server.Alignment
             A1 = a1;
             A2 = a2;
         }
+
+        public double DistanceTo(AxisPositionRad other)
+        {
+            double dA1 = A1 - other.A1;
+            double dA2 = A2 - other.A2;
+            return Math.Sqrt(dA1 * dA1 + dA2 * dA2);
+        }
+
     }
 
     public static class AxisPositionExtensions
     {
+        public static AxisPosition ToDeg(this AxisPositionRad p) =>
+            new AxisPosition(
+                Units.Rad2Deg(p.A1),
+                Units.Rad2Deg(p.A2)
+            );
+
         public static AxisPositionRad ToRad(this AxisPosition p) =>
             new AxisPositionRad(
                 Units.Deg2Rad(p.A1),
                 Units.Deg2Rad(p.A2)
             );
 
-        public static AxisPosition FromRad(this AxisPositionRad p) =>
-            new AxisPosition(
-                Units.Rad2Deg(p.A1),
-                Units.Rad2Deg(p.A2)
-            );
     }
 
 

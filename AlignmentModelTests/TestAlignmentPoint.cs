@@ -16,7 +16,7 @@ namespace AlignmentModelTests
             return new AlignmentPoint
             {
                 Ideal = new AxisPosition(idealA1, idealA2),
-                Unsynced = new AxisPosition(rawA1, rawA2),
+                Raw = new AxisPosition(rawA1, rawA2),
                 HourAngle = hourAngle,
                 AlignTime = DateTime.Now
             };

@@ -1,12 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GS.Server.Alignment
 {
@@ -31,7 +28,7 @@ namespace GS.Server.Alignment
         /// <summary>
         /// The raw mount axis angles reported by the mount before sync.
         /// </summary>
-        public AxisPosition Unsynced { get; set; }
+        public AxisPosition Raw { get; set; }
 
         /// <summary>
         /// Hour angle at the moment of sync (computed by SkyServer).
@@ -40,7 +37,7 @@ namespace GS.Server.Alignment
         public double HourAngle { get; set; }
 
         [JsonIgnore]
-        public AxisPositionRad RawRad => Unsynced.ToRad();
+        public AxisPositionRad RawRad => Raw.ToRad();
 
         [JsonIgnore]
         public AxisPositionRad IdealRad => Ideal.ToRad();
@@ -52,8 +49,15 @@ namespace GS.Server.Alignment
         [JsonIgnore]
         public AxisPosition Residual =>
             new AxisPosition(
-                Unsynced.A1 - Ideal.A1,
-                Unsynced.A2 - Ideal.A2
+                Raw.A1 - Ideal.A1,
+                Raw.A2 - Ideal.A2
+            );
+
+        [JsonIgnore]
+        public AxisPositionRad ResidualRad =>
+            new AxisPositionRad(
+                RawRad.A1 - IdealRad.A1,
+                RawRad.A2 - IdealRad.A2
             );
 
         public AlignmentPoint() { }
@@ -61,7 +65,7 @@ namespace GS.Server.Alignment
         public AlignmentPoint(AxisPosition ideal, AxisPosition unsynced, double hourAngle, DateTime time)
         {
             Ideal = ideal;
-            Unsynced = unsynced;
+            Raw = unsynced;
             HourAngle = hourAngle;
             AlignTime = time;
         }

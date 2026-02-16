@@ -296,7 +296,7 @@ namespace GS.Server.Alignment
             foreach (var pt in Points)
             {
                 _stringBuilder.AppendLine(
-                    $"{pt.Id:D3}\t{pt.Unsynced.A1}/{pt.Unsynced.A2}\t{pt.Ideal.A1}/{pt.Ideal.A2}\t{pt.AlignTime}");
+                    $"{pt.Id:D3}\t{pt.Raw.A1}/{pt.Raw.A2}\t{pt.Ideal.A1}/{pt.Ideal.A2}\t{pt.AlignTime}");
             }
             RaiseNotification(NotificationType.Data, MethodBase.GetCurrentMethod()?.Name, _stringBuilder.ToString());
             _stringBuilder.Clear();

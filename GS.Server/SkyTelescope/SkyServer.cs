@@ -6789,7 +6789,7 @@ namespace GS.Server.SkyTelescope
             // 3. Create the alignment point
             var p = new AlignmentPoint
             {
-                Unsynced = unsynced,
+                Raw = unsynced,
                 Ideal = ideal,
                 HourAngle = Coordinate.Ra2Ha24(TargetRa, SiderealTime),
                 AlignTime = utcNow
@@ -6807,7 +6807,7 @@ namespace GS.Server.SkyTelescope
                 Type = MonitorType.Information,
                 Method = MethodBase.GetCurrentMethod()?.Name,
                 Thread = Thread.CurrentThread.ManagedThreadId,
-                Message = $"Alignment point added: Raw={p.Unsynced.A1}/{p.Unsynced.A2}, Ideal={p.Ideal.A1}/{p.Ideal.A2}, Ha={p.HourAngle}"
+                Message = $"Alignment point added: Raw={p.Raw.A1}/{p.Raw.A2}, Ideal={p.Ideal.A1}/{p.Ideal.A2}, Ha={p.HourAngle}"
             };
             MonitorLog.LogToMonitor(monitorItem);
         }

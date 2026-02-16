@@ -152,10 +152,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AxisPositionTests.cs" />
+    <Compile Include="LocalAffine2DTests.cs" />
+    <Compile Include="LocalEquatorialPointingModelIntegrationTests.cs" />
     <Compile Include="PointingModelFactory.cs" />
     <Compile Include="PointingModelTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestAlignmentPoint.cs" />
+    <Compile Include="TriangleSelectorTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
