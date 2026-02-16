@@ -37,21 +37,21 @@ namespace GS.Server.Alignment
     /// </summary>
     public struct AxisPosition
     {
-        private double _ra;
-        private double _dec;
+        private double _a1;
+        private double _a2;
 
         [JsonProperty]
-        public double RA
+        public double A1
         {
-            get => _ra;
-            set => _ra = value;
+            get => _a1;
+            set => _a1 = value;
         }
 
         [JsonProperty]
-        public double Dec
+        public double A2
         {
-            get => _dec;
-            set => _dec = value;
+            get => _a2;
+            set => _a2 = value;
         }
 
 
@@ -65,8 +65,8 @@ namespace GS.Server.Alignment
         /// <param name="dec">Dec axis encoder value</param>
         public AxisPosition(double ra, double dec)
         {
-            _ra = ra;
-            _dec = dec;
+            _a1 = ra;
+            _a2 = dec;
         }
 
 
@@ -75,8 +75,8 @@ namespace GS.Server.Alignment
             var positions = axisPositions.Split('|');
             try
             {
-                _ra = double.Parse(positions[0]);
-                _dec = double.Parse(positions[1]);
+                _a1 = double.Parse(positions[0]);
+                _a2 = double.Parse(positions[1]);
             }
             catch
             {
@@ -108,7 +108,7 @@ namespace GS.Server.Alignment
                 {
                     throw new ArgumentOutOfRangeException();
                 }
-                return (index == 0 ? _ra : _dec);
+                return (index == 0 ? _a1 : _a2);
             }
             set
             {
@@ -118,11 +118,11 @@ namespace GS.Server.Alignment
                 }
                 if (index == 0)
                 {
-                    _ra = value;
+                    _a1 = value;
                 }
                 else
                 {
-                    _dec = value;
+                    _a2 = value;
                 }
             }
         }
@@ -132,7 +132,7 @@ namespace GS.Server.Alignment
         /// </summary>
         public static bool operator ==(AxisPosition pos1, AxisPosition pos2)
         {
-            return (pos1.RA == pos2.RA && pos1.Dec == pos2.Dec);
+            return (pos1.A1 == pos2.A1 && pos1.A2 == pos2.A2);
         }
 
         public static bool operator !=(AxisPosition pos1, AxisPosition pos2)
@@ -142,12 +142,12 @@ namespace GS.Server.Alignment
 
         public static AxisPosition operator -(AxisPosition pos1, AxisPosition pos2)
         {
-            return new AxisPosition(pos1.RA - pos2.RA, pos1.Dec - pos2.Dec);
+            return new AxisPosition(pos1.A1 - pos2.A1, pos1.A2 - pos2.A2);
         }
 
         public static AxisPosition operator +(AxisPosition pos1, AxisPosition pos2)
         {
-            return new AxisPosition(pos1.RA + pos2.RA, pos1.Dec + pos2.Dec);
+            return new AxisPosition(pos1.A1 + pos2.A1, pos1.A2 + pos2.A2);
         }
 
         public override int GetHashCode()
@@ -156,8 +156,8 @@ namespace GS.Server.Alignment
             {
                 var hash = 17;
                 // Suitable nullity checks etc, of course :)
-                hash = hash * 23 + _ra.GetHashCode();
-                hash = hash * 23 + _dec.GetHashCode();
+                hash = hash * 23 + _a1.GetHashCode();
+                hash = hash * 23 + _a2.GetHashCode();
                 return hash;
             }
         }
@@ -171,9 +171,9 @@ namespace GS.Server.Alignment
 
         public bool Equals(AxisPosition obj, double toleranceDegrees)
         {
-            var deltaRa = Math.Abs(obj.RA - RA);
+            var deltaRa = Math.Abs(obj.A1 - A1);
             deltaRa = (deltaRa + 180) % 360 - 180;
-            var deltaDec = Math.Abs(obj.Dec - Dec);
+            var deltaDec = Math.Abs(obj.A2 - A2);
             deltaDec = (deltaDec + 180) % 360 - 180;
             return (deltaRa <= toleranceDegrees
                && deltaDec <= toleranceDegrees);
@@ -183,10 +183,10 @@ namespace GS.Server.Alignment
         public double IncludedAngleTo(AxisPosition axisPosition2)
         {
             double piby2 = Math.PI * 0.5;
-            double thisRARadians = Units.Deg2Rad(this.RA);
-            double thisDecRadians = Units.Deg2Rad(this.Dec);
-            double thatRARadians = Units.Deg2Rad(axisPosition2.RA);
-            double thatDecRadians = Units.Deg2Rad(axisPosition2.Dec);
+            double thisRARadians = Units.Deg2Rad(this.A1);
+            double thisDecRadians = Units.Deg2Rad(this.A2);
+            double thatRARadians = Units.Deg2Rad(axisPosition2.A1);
+            double thatDecRadians = Units.Deg2Rad(axisPosition2.A2);
             // Using the law of Cosines
             double c = (Math.Cos(piby2 - thisDecRadians) * Math.Cos(piby2 - thatDecRadians))
                        + (Math.Sin(piby2 - thisDecRadians) * Math.Sin(piby2 - thatDecRadians) *
@@ -197,4 +197,33 @@ namespace GS.Server.Alignment
         }
 
     }
+
+    public readonly struct AxisPositionRad
+    {
+        public double A1 { get; }
+        public double A2 { get; }
+
+        public AxisPositionRad(double a1, double a2)
+        {
+            A1 = a1;
+            A2 = a2;
+        }
+    }
+
+    public static class AxisPositionExtensions
+    {
+        public static AxisPositionRad ToRad(this AxisPosition p) =>
+            new AxisPositionRad(
+                Units.Deg2Rad(p.A1),
+                Units.Deg2Rad(p.A2)
+            );
+
+        public static AxisPosition FromRad(this AxisPositionRad p) =>
+            new AxisPosition(
+                Units.Rad2Deg(p.A1),
+                Units.Rad2Deg(p.A2)
+            );
+    }
+
+
 }

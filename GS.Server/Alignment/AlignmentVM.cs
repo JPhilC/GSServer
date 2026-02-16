@@ -66,7 +66,7 @@ namespace GS.Server.Alignment
 
         //public ObservableCollection<AlignmentPoint> AlignmentPoints { get; } = new ObservableCollection<AlignmentPoint>();
 
-        public ObservableCollection<AlignmentPoint> AlignmentPoints => SkyServer.AlignmentModel.AlignmentPoints;
+        public ObservableCollection<AlignmentPoint> AlignmentPoints => SkyServer.AlignmentModel.Points;
 
         private AlignmentPoint _selectedAlignmentPoint;
 
@@ -124,42 +124,6 @@ namespace GS.Server.Alignment
 
         }
 
-        public AlignmentBehaviourEnum AlignmentBehaviour
-        {
-            get => AlignmentSettings.AlignmentBehaviour;
-            set
-            {
-                AlignmentSettings.AlignmentBehaviour = value;
-                OnPropertyChanged();
-                AlignmentSettings.Save();
-            }
-
-        }
-
-        public ActivePointsEnum ActivePoints
-        {
-            get => AlignmentSettings.ActivePoints;
-            set
-            {
-                AlignmentSettings.ActivePoints = value;
-                OnPropertyChanged();
-                AlignmentSettings.Save();
-            }
-
-        }
-
-        public ThreePointAlgorithmEnum ThreePointAlgorithm
-        {
-            get => AlignmentSettings.ThreePointAlgorithm;
-            set
-            {
-                AlignmentSettings.ThreePointAlgorithm = value;
-                OnPropertyChanged();
-                AlignmentSettings.Save();
-            }
-
-        }
-
         public IList<int> AlignmentWarningThresholdList { get; }
 
 
@@ -188,95 +152,95 @@ namespace GS.Server.Alignment
 
         #region Plotting properties ...
 
-        private ScatterSeries<AlignmentPoint> _unsyncedScatterSeries = new ScatterSeries<AlignmentPoint>
-        {
-            Stroke = new SolidColorPaint(SKColors.LightCoral) { StrokeThickness = 1 },
-            Fill = null,
-            Values = SkyServer.AlignmentModel.AlignmentPoints,
-            Mapping = (alignmentPoint, point) =>
-            {
-                point.PrimaryValue = alignmentPoint.UnsyncedCartesian.x;
-                point.SecondaryValue = -alignmentPoint.UnsyncedCartesian.y;
-            },
-            GeometrySize = 10,
-        };
+        //private ScatterSeries<AlignmentPoint> _unsyncedScatterSeries = new ScatterSeries<AlignmentPoint>
+        //{
+        //    Stroke = new SolidColorPaint(SKColors.LightCoral) { StrokeThickness = 1 },
+        //    Fill = null,
+        //    Values = SkyServer.AlignmentModel.Points,
+        //    Mapping = (alignmentPoint, point) =>
+        //    {
+        //        point.PrimaryValue = alignmentPoint.UnsyncedCartesian.x;
+        //        point.SecondaryValue = -alignmentPoint.UnsyncedCartesian.y;
+        //    },
+        //    GeometrySize = 10,
+        //};
 
-        private ScatterSeries<AlignmentPoint, SquareGeometry> _syncedScatterSeries =
-            new ScatterSeries<AlignmentPoint, SquareGeometry>
-            {
-                Stroke = new SolidColorPaint(SKColors.LightGreen) { StrokeThickness = 1 },
-                Fill = null,
-                Values = SkyServer.AlignmentModel.AlignmentPoints,
-                Mapping = (alignmentPoint, point) =>
-                {
-                    point.PrimaryValue = alignmentPoint.SyncedCartesian.x;
-                    point.SecondaryValue = -alignmentPoint.SyncedCartesian.y;
-                },
-                GeometrySize = 10
-            };
+        //private ScatterSeries<AlignmentPoint, SquareGeometry> _syncedScatterSeries =
+        //    new ScatterSeries<AlignmentPoint, SquareGeometry>
+        //    {
+        //        Stroke = new SolidColorPaint(SKColors.LightGreen) { StrokeThickness = 1 },
+        //        Fill = null,
+        //        Values = SkyServer.AlignmentModel.Points,
+        //        Mapping = (alignmentPoint, point) =>
+        //        {
+        //            point.PrimaryValue = alignmentPoint.SyncedCartesian.x;
+        //            point.SecondaryValue = -alignmentPoint.SyncedCartesian.y;
+        //        },
+        //        GeometrySize = 10
+        //    };
 
 
         public ObservableCollection<ISeries> ChartData { get; } = new ObservableCollection<ISeries>()
         {
-            // Current telescope position
-            new LineSeries<CartesCoord>
-            {
-                Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 4 },
-                Fill = null,
-                Values = SkyServer.AlignmentModel.CurrentPoint,
-                Mapping = (coord, point) =>
-                {
-                    point.PrimaryValue = coord.x ;
-                    point.SecondaryValue = -coord.y ;
-                },
-                GeometrySize = 15,
-                GeometryFill = new SolidColorPaint(SKColors.Red.WithAlpha(90)),
-                GeometryStroke = new SolidColorPaint(SKColors.Red.WithAlpha(90))
-            },
-            // Triangle for 3 points synched
-            new LineSeries<AlignmentPoint>
-            {
-                Values = SkyServer.AlignmentModel.ChartTrianglePoints,
-                Mapping = (alignmentPoint, point) =>
-                {
-                    point.PrimaryValue = alignmentPoint.SyncedCartesian.x ;
-                    point.SecondaryValue = -alignmentPoint.SyncedCartesian.y ;
-                },
-                Fill = null,
-                Stroke = new SolidColorPaint(SKColors.Green) {StrokeThickness = 1},
-                LineSmoothness=0,
-                GeometrySize=0
-            },
-            // Triangle for 3 points un-synched
-            new LineSeries<AlignmentPoint>
-            {
-                Values = SkyServer.AlignmentModel.ChartTrianglePoints,
-                Mapping = (alignmentPoint, point) =>
-                {
-                    point.PrimaryValue = alignmentPoint.UnsyncedCartesian.x;
-                    point.SecondaryValue = -alignmentPoint.UnsyncedCartesian.y;
-                },
-                Fill = null,
-                Stroke = new SolidColorPaint(SKColors.Red) {StrokeThickness = 1},
-                LineSmoothness=0,
-                GeometrySize=0
-            },
-            // Single point highlighted.
-            new LineSeries<CartesCoord>
-            {
-                Stroke = null,
-                Fill = null,
-                Values = SkyServer.AlignmentModel.ChartNearestPoint,
-                Mapping = (alignmentPoint, point) =>
-                {
-                    point.PrimaryValue = alignmentPoint.x;
-                    point.SecondaryValue = -alignmentPoint.y;
-                },
-                GeometrySize = 30,
-                GeometryFill = null,
-                GeometryStroke = new SolidColorPaint(SKColors.Green)
-            }
-            // Additional series added in method CompleteChartSeriesInit
+            //// Current telescope position
+            //new LineSeries<CartesCoord>
+            //{
+            //    Stroke = new SolidColorPaint(SKColors.Green) { StrokeThickness = 4 },
+            //    Fill = null,
+            //    Values = SkyServer.AlignmentModel.CurrentPoint,
+            //    Mapping = (coord, point) =>
+            //    {
+            //        point.PrimaryValue = coord.x ;
+            //        point.SecondaryValue = -coord.y ;
+            //    },
+            //    GeometrySize = 15,
+            //    GeometryFill = new SolidColorPaint(SKColors.Red.WithAlpha(90)),
+            //    GeometryStroke = new SolidColorPaint(SKColors.Red.WithAlpha(90))
+            //},
+            //// Triangle for 3 points synched
+            //new LineSeries<AlignmentPoint>
+            //{
+            //    Values = SkyServer.AlignmentModel.ChartTrianglePoints,
+            //    Mapping = (alignmentPoint, point) =>
+            //    {
+            //        point.PrimaryValue = alignmentPoint.SyncedCartesian.x ;
+            //        point.SecondaryValue = -alignmentPoint.SyncedCartesian.y ;
+            //    },
+            //    Fill = null,
+            //    Stroke = new SolidColorPaint(SKColors.Green) {StrokeThickness = 1},
+            //    LineSmoothness=0,
+            //    GeometrySize=0
+            //},
+            //// Triangle for 3 points un-synched
+            //new LineSeries<AlignmentPoint>
+            //{
+            //    Values = SkyServer.AlignmentModel.ChartTrianglePoints,
+            //    Mapping = (alignmentPoint, point) =>
+            //    {
+            //        point.PrimaryValue = alignmentPoint.UnsyncedCartesian.x;
+            //        point.SecondaryValue = -alignmentPoint.UnsyncedCartesian.y;
+            //    },
+            //    Fill = null,
+            //    Stroke = new SolidColorPaint(SKColors.Red) {StrokeThickness = 1},
+            //    LineSmoothness=0,
+            //    GeometrySize=0
+            //},
+            //// Single point highlighted.
+            //new LineSeries<CartesCoord>
+            //{
+            //    Stroke = null,
+            //    Fill = null,
+            //    Values = SkyServer.AlignmentModel.ChartNearestPoint,
+            //    Mapping = (alignmentPoint, point) =>
+            //    {
+            //        point.PrimaryValue = alignmentPoint.x;
+            //        point.SecondaryValue = -alignmentPoint.y;
+            //    },
+            //    GeometrySize = 30,
+            //    GeometryFill = null,
+            //    GeometryStroke = new SolidColorPaint(SKColors.Green)
+            //}
+            //// Additional series added in method CompleteChartSeriesInit
         };
 
         const double ChartLimit = 12.0E6;
@@ -314,7 +278,7 @@ namespace GS.Server.Alignment
             if (_skyTelescopeVM == null) _skyTelescopeVM = SkyTelescopeVm.ASkyTelescopeVm;
 
             BindingOperations.EnableCollectionSynchronization(AlignmentPoints, _alignmentPointsLock);
-            SkyServer.AlignmentModel.AlignmentPoints.CollectionChanged += AlignmentPoints_CollectionChanged;
+            SkyServer.AlignmentModel.Points.CollectionChanged += AlignmentPoints_CollectionChanged;
             AlignmentSettings.StaticPropertyChanged += AlignmentSettings_StaticPropertyChanged;
 
             CompleteChartSeriesInit();
@@ -329,35 +293,35 @@ namespace GS.Server.Alignment
 
         private void CompleteChartSeriesInit()
         {
-            _unsyncedScatterSeries.DataPointerDown += ScatterSeries_DataPointerDown;
-            _syncedScatterSeries.DataPointerDown += ScatterSeries_DataPointerDown;
-            ChartData.Add(_unsyncedScatterSeries);
-            ChartData.Add(_syncedScatterSeries);
-            ChartData.Add(new ScatterSeries<AlignmentPoint>
-            {
-                Stroke = new SolidColorPaint(SKColors.LightGray) { StrokeThickness = 2 },
-                Fill = null,
-                Values = SelectedAlignmentPointList,
-                Mapping = (alignmentPoint, point) =>
-                {
-                    point.PrimaryValue = alignmentPoint.UnsyncedCartesian.x;
-                    point.SecondaryValue = -alignmentPoint.UnsyncedCartesian.y;
-                },
-                GeometrySize = 14,
-            });
-            // Synced selected point
-            ChartData.Add(new ScatterSeries<AlignmentPoint, SquareGeometry>
-            {
-                Stroke = new SolidColorPaint(SKColors.LightGray) { StrokeThickness = 2 },
-                Fill = null,
-                Values = SelectedAlignmentPointList,
-                Mapping = (alignmentPoint, point) =>
-                {
-                    point.PrimaryValue = alignmentPoint.SyncedCartesian.x;
-                    point.SecondaryValue = -alignmentPoint.SyncedCartesian.y;
-                },
-                GeometrySize = 14
-            });
+            //_unsyncedScatterSeries.DataPointerDown += ScatterSeries_DataPointerDown;
+            //_syncedScatterSeries.DataPointerDown += ScatterSeries_DataPointerDown;
+            //ChartData.Add(_unsyncedScatterSeries);
+            //ChartData.Add(_syncedScatterSeries);
+            //ChartData.Add(new ScatterSeries<AlignmentPoint>
+            //{
+            //    Stroke = new SolidColorPaint(SKColors.LightGray) { StrokeThickness = 2 },
+            //    Fill = null,
+            //    Values = SelectedAlignmentPointList,
+            //    Mapping = (alignmentPoint, point) =>
+            //    {
+            //        point.PrimaryValue = alignmentPoint.UnsyncedCartesian.x;
+            //        point.SecondaryValue = -alignmentPoint.UnsyncedCartesian.y;
+            //    },
+            //    GeometrySize = 14,
+            //});
+            //// Synced selected point
+            //ChartData.Add(new ScatterSeries<AlignmentPoint, SquareGeometry>
+            //{
+            //    Stroke = new SolidColorPaint(SKColors.LightGray) { StrokeThickness = 2 },
+            //    Fill = null,
+            //    Values = SelectedAlignmentPointList,
+            //    Mapping = (alignmentPoint, point) =>
+            //    {
+            //        point.PrimaryValue = alignmentPoint.SyncedCartesian.x;
+            //        point.SecondaryValue = -alignmentPoint.SyncedCartesian.y;
+            //    },
+            //    GeometrySize = 14
+            //});
 
         }
 
@@ -540,7 +504,7 @@ namespace GS.Server.Alignment
                 ButtonTwoCaption = $"{Application.Current.Resources["aliCancelButtonCaption"]}",
                 OnButtonOneClicked = () =>
                 {
-                    SkyServer.AlignmentModel.RemoveAlignmentPoint(SelectedAlignmentPoint);
+                    SkyServer.AlignmentModel.RemovePoint(SelectedAlignmentPoint);
                     IsDialogOpen = false;
                 },
                 OnButtonTwoClicked = () =>
@@ -572,17 +536,9 @@ namespace GS.Server.Alignment
 
         private void ExportPointModel()
         {
-            var dlg = new SaveFileDialog { Filter = $"{Application.Current.Resources["aliPointModelFileFilter"]}|Test data (*.datarows)|*.datarows" };
+            var dlg = new SaveFileDialog { Filter = $"{Application.Current.Resources["aliPointModelFileFilter"]}" };
             if (dlg.ShowDialog() != true) return;
-            if (dlg.FileName.EndsWith(".datarows"))
-            {
-                // Export test data suitable for unit testing the code
-                SkyServer.AlignmentModel.ExportAlignmentPointTestData(dlg.FileName);
-            }
-            else
-            {
-                SkyServer.AlignmentModel.SaveAlignmentPoints(dlg.FileName);
-            }
+                SkyServer.AlignmentModel.Save(dlg.FileName);
         }
 
         private RelayCommand _importCommand;
@@ -643,8 +599,8 @@ namespace GS.Server.Alignment
             string filename = fileDialog.ShowDialog() != true ? null : fileDialog.FileName;
             if (filename != null)
             {
-                SkyServer.AlignmentModel.LoadAlignmentPoints(filename);
-                SkyServer.AlignmentModel.SaveAlignmentPoints(); // Save to default configuration file.
+                SkyServer.AlignmentModel.Load(filename);
+                SkyServer.AlignmentModel.Save(); // Save to default configuration file.
             }
 
         }
@@ -754,10 +710,10 @@ namespace GS.Server.Alignment
         {
             if (disposing)
             {
-                WeakEventManager<AlignmentPointCollection, NotifyCollectionChangedEventArgs>.RemoveHandler(SkyServer.AlignmentModel.AlignmentPoints, "CollectionChanged", AlignmentPoints_CollectionChanged);
+                WeakEventManager<AlignmentPointCollection, NotifyCollectionChangedEventArgs>.RemoveHandler(SkyServer.AlignmentModel.Points, "CollectionChanged", AlignmentPoints_CollectionChanged);
                 AlignmentSettings.StaticPropertyChanged -= AlignmentSettings_StaticPropertyChanged;
-                _unsyncedScatterSeries.DataPointerDown -= ScatterSeries_DataPointerDown;
-                _syncedScatterSeries.DataPointerDown -= ScatterSeries_DataPointerDown;
+                //_unsyncedScatterSeries.DataPointerDown -= ScatterSeries_DataPointerDown;
+                //_syncedScatterSeries.DataPointerDown -= ScatterSeries_DataPointerDown;
                 _skyTelescopeVM?.Dispose();
             }
 

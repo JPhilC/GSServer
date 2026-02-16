@@ -47,19 +47,6 @@
                                   CommandParameter="{x:Static Dock.Left}"
                                   IsChecked="{Binding ElementName=MenuToggleButton, Path=IsChecked, Mode=TwoWay}"/>
 
-                            <ComboBox Grid.Row="1" md:HintAssist.Hint="{StaticResource optAlignmentMode}" 
-                              MinWidth="10" Margin="20,0,5,20" Width="200" 
-                              HorizontalAlignment="Left" VerticalAlignment="Top" 
-                              ToolTip="{StaticResource aliAlignmentModeTooltip}" 
-                              ItemsSource="{Binding Source={domain:EnumValueBindingSource {x:Type alignment:AlignmentBehaviourEnum}}}" 
-                              SelectedItem="{Binding AlignmentBehaviour}"
-                              Style="{StaticResource MaterialDesignFloatingHintComboBox}">
-                                <ComboBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel />
-                                    </ItemsPanelTemplate>
-                                </ComboBox.ItemsPanel>
-                            </ComboBox>
                             <StackPanel Grid.Row="2" Grid.Column="0"  Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="20,0,5,20">
                                 <md:PopupBox  StaysOpen="False" IsEnabled="true" VerticalAlignment="Bottom" Width="24" HorizontalAlignment="Left" ToolTip="{StaticResource skyReset}">
                                     <Grid Width="150">
@@ -78,41 +65,7 @@
                                  ToolTip="{StaticResource aliProximityLimitTooltip}"
                                  Style="{StaticResource MaterialDesignFloatingHintTextBox}" domain:TextBoxMaskBehaviour.Mask="Decimal" />
                             </StackPanel>
-                            <Slider Grid.Row="2" Grid.Column="2" Value="{Binding ProximityLimitArcSeconds}" 
-                            Style="{StaticResource MaterialDesignDiscreteVerticalSlider}"
-                            ToolTip="{StaticResource aliProximityLimitTooltip}"
-                            Width="75"
-                            Orientation="Vertical"
-                            Minimum="0" Maximum="7200" 
-                            TickFrequency="200"
-                            TickPlacement="None" />
 
-                            <ComboBox Grid.Row="3" md:HintAssist.Hint="{StaticResource optActivePoints}" 
-                              MinWidth="10" Margin="20,0,5,20" Width="200" 
-                              HorizontalAlignment="Left" VerticalAlignment="Top" 
-                              ToolTip="{StaticResource aliActivePointsTooltip}" 
-                              ItemsSource="{Binding Source={domain:EnumValueBindingSource {x:Type alignment:ActivePointsEnum}}}" 
-                              SelectedItem="{Binding ActivePoints}"
-                              Style="{StaticResource MaterialDesignFloatingHintComboBox}">
-                                <ComboBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel />
-                                    </ItemsPanelTemplate>
-                                </ComboBox.ItemsPanel>
-                            </ComboBox>
-                            <ComboBox Grid.Row="4" md:HintAssist.Hint="{StaticResource optThreePointAlgorithm}" 
-                              MinWidth="10" Margin="20,0,5,20" Width="200" 
-                              HorizontalAlignment="Left" VerticalAlignment="Top" 
-                              ToolTip="{StaticResource aliThreePointAlgorithmTooltip}" 
-                              ItemsSource="{Binding Source={domain:EnumValueBindingSource {x:Type alignment:ThreePointAlgorithmEnum}}}"
-                              SelectedItem="{Binding ThreePointAlgorithm}"
-                              Style="{StaticResource MaterialDesignFloatingHintComboBox}">
-                                <ComboBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <VirtualizingStackPanel />
-                                    </ItemsPanelTemplate>
-                                </ComboBox.ItemsPanel>
-                            </ComboBox>
                             <ComboBox Grid.Row="5" md:HintAssist.Hint="{StaticResource optAlignmentWarningThreshold}" 
                               MinWidth="10" Margin="20,0,5,0" 
                               HorizontalAlignment="Left" VerticalAlignment="Top"  

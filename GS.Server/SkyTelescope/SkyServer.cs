@@ -126,13 +126,9 @@ namespace GS.Server.SkyTelescope
 
                 // initialise the alignment model
                 AlignmentSettings.Load();
-                AlignmentModel = new AlignmentModel(
-                    SkySettings.Latitude,
-                    SkySettings.Longitude,
-                    SkySettings.Elevation)
+                AlignmentModel = new AlignmentModel(SkySettings.AlignmentMode)
                 {
                     IsAlignmentOn = AlignmentSettings.IsAlignmentOn,
-                    ThreePointAlgorithm = ThreePointAlgorithmEnum.BestCentre
                 };
                 AlignmentModel.Notification += AlignmentModel_Notification;
 
@@ -522,7 +518,7 @@ namespace GS.Server.SkyTelescope
                 OnStaticPropertyChanged();
             }
         }
-        
+
         /// <summary>
         /// Checks if the auto home async process is running
         /// </summary>
@@ -646,7 +642,7 @@ namespace GS.Server.SkyTelescope
         /// Pulse reporting to driver
         /// Alt Az uses both axes so always synchronous pulse guiding on one of Ra or Dec
         /// </summary>
-        public static bool IsPulseGuiding => (IsPulseGuidingDec || IsPulseGuidingRa); 
+        public static bool IsPulseGuiding => (IsPulseGuidingDec || IsPulseGuidingRa);
 
         /// <summary>
         /// Checks if the auto home async process is running
@@ -1109,15 +1105,15 @@ namespace GS.Server.SkyTelescope
                 ActionRateRaDec(); // Update the mount tracking rate
 
                 var monitorItem = new MonitorEntry
-                    {
-                        Datetime = HiResDateTime.UtcNow,
-                        Device = MonitorDevice.Server,
-                        Category = MonitorCategory.Server,
-                        Type = MonitorType.Data,
-                        Method = MethodBase.GetCurrentMethod()?.Name,
-                        Thread = Thread.CurrentThread.ManagedThreadId,
-                        Message = $"{_rateRaDec.X}|{SkyTrackingOffset[0]}"
-                    };
+                {
+                    Datetime = HiResDateTime.UtcNow,
+                    Device = MonitorDevice.Server,
+                    Category = MonitorCategory.Server,
+                    Type = MonitorType.Data,
+                    Method = MethodBase.GetCurrentMethod()?.Name,
+                    Thread = Thread.CurrentThread.ManagedThreadId,
+                    Message = $"{_rateRaDec.X}|{SkyTrackingOffset[0]}"
+                };
                 MonitorLog.LogToMonitor(monitorItem);
             }
         }
@@ -1216,7 +1212,7 @@ namespace GS.Server.SkyTelescope
                         {
                             //return _appAxes.Y <= 90 && _appAxes.Y >= -90 ? PierSide.pierWest : PierSide.pierEast;
                             // replaced with ...
-                            sideOfPier = (_appAxes.Y < 90.0000000001 && _appAxes.Y > -90.0000000001) ? PierSide.pierWest :PierSide.pierEast;
+                            sideOfPier = (_appAxes.Y < 90.0000000001 && _appAxes.Y > -90.0000000001) ? PierSide.pierWest : PierSide.pierEast;
                         }
                         else
                         {
@@ -1322,47 +1318,60 @@ namespace GS.Server.SkyTelescope
             {
                 _steps = value;
 
-                //Implement Pec
+                // 1. PEC handling
                 PecCheck();
 
-                //Convert Positions to degrees
-                var rawPositions = new[] { ConvertStepsToDegrees(_steps[0], 0), ConvertStepsToDegrees(_steps[1], 1) };
-                UpdateMountLimitStatus(rawPositions);
+                // 2. Convert raw microsteps → raw physical mount axes (corrected axes)
+                var correctedAxesDeg = new[]
+                {
+                    ConvertStepsToDegrees(_steps[0], 0),
+                    ConvertStepsToDegrees(_steps[1], 1)
+                };
 
-                // Convert to axis position from physical position 
-                rawPositions = GetUnsyncedAxes(rawPositions);
+                UpdateMountLimitStatus(correctedAxesDeg);
 
+                // 3. Convert corrected axes → local app axes (XY)
+                var correctedAppAxes = Axes.AxesMountToApp(correctedAxesDeg);
 
-                // UI diagnostics in degrees
-                ActualAxisX = rawPositions[0];
-                ActualAxisY = rawPositions[1];
+                // 4. Convert corrected app axes → RA/Dec (this is the *actual* pointing direction)
+                var raDecCorrected = Axes.AxesXyToRaDec(correctedAppAxes);
+                double raCorrected = raDecCorrected[0];
+                double decCorrected = raDecCorrected[1];
 
-                // convert positions to local app axes
-                var axes = Axes.AxesMountToApp(rawPositions);
+                // 5. Compute hour angle from the *corrected* RA
+                double hourAngle = Coordinate.Ra2Ha24(raCorrected, SiderealTime);
 
-                // store local app axes to track positions
-                _appAxes.X = axes[0];
-                _appAxes.Y = axes[1];
+                // 6. Reverse the pointing model to get the *ideal* axes
+                var idealAxesDeg = GetIdealAxes(correctedAxesDeg, hourAngle);
 
-                // UI diagnostics for local app exes
-                AppAxisX = axes[0];
-                AppAxisY = axes[1];
+                // 7. UI diagnostics: store ideal axes
+                ActualAxisX = idealAxesDeg[0];
+                ActualAxisY = idealAxesDeg[1];
 
-                // Calculate mount Alt/Az
-                var altAz = Axes.AxesXyToAzAlt(axes);
+                // 8. Convert ideal axes → local app axes
+                var idealAppAxes = Axes.AxesMountToApp(idealAxesDeg);
+                _appAxes.X = idealAppAxes[0];
+                _appAxes.Y = idealAppAxes[1];
+
+                AppAxisX = idealAppAxes[0];
+                AppAxisY = idealAppAxes[1];
+
+                // 9. Convert ideal app axes → Alt/Az
+                var altAz = Axes.AxesXyToAzAlt(idealAppAxes);
                 Azimuth = altAz[0];
                 Altitude = altAz[1];
 
-                // Calculate top-o-centric Ra/Dec
-                var raDec = Axes.AxesXyToRaDec(axes);
-                RightAscension = raDec[0];
-                Declination = raDec[1];
+                // 10. Convert ideal app axes → RA/Dec (this is what clients expect)
+                var raDecIdeal = Axes.AxesXyToRaDec(idealAppAxes);
+                RightAscension = raDecIdeal[0];
+                Declination = raDecIdeal[1];
 
-                // Calculate EquatorialSystem Property Ra/Dec for UI
-                var xy = Transforms.InternalToCoordType(raDec[0], raDec[1]);
+                // 11. Convert RA/Dec to user-selected coordinate system
+                var xy = Transforms.InternalToCoordType(raDecIdeal[0], raDecIdeal[1]);
                 RightAscensionXForm = xy.X;
                 DeclinationXForm = xy.Y;
 
+                // 12. Notify UI
                 OnStaticPropertyChanged();
             }
         }
@@ -1782,7 +1791,7 @@ namespace GS.Server.SkyTelescope
                 {
                     if (maxTries > 5) { break; }
                     maxTries++;
-                    double[] simTarget = {0.0, 0.0};
+                    double[] simTarget = { 0.0, 0.0 };
 
                     // convert target to axis for Ra / Dec slew and calculate tracking rates
                     if (SkySettings.AlignmentMode == AlignmentModes.algAltAz)
@@ -1819,10 +1828,10 @@ namespace GS.Server.SkyTelescope
                     // track movement until axes are stopped
                     var stopwatch1 = Stopwatch.StartNew();
 
-                var axis1Stopped = false;
-                var axis2Stopped = false;
+                    var axis1Stopped = false;
+                    var axis2Stopped = false;
 
-                while (stopwatch1.Elapsed.TotalMilliseconds < 500)
+                    while (stopwatch1.Elapsed.TotalMilliseconds < 500)
                     {
                         token.ThrowIfCancellationRequested();
                         Thread.Sleep(100);
@@ -2317,7 +2326,7 @@ namespace GS.Server.SkyTelescope
                     // Check for maxtries or no change and exit
                     if (maxTries >= 5) { break; }
                     maxTries++;
-                    double[] skyTarget = {0.0, 0.0};
+                    double[] skyTarget = { 0.0, 0.0 };
 
                     // convert target to axis for Ra / Dec slew and calculate tracking rates
                     if (SkySettings.AlignmentMode == AlignmentModes.algAltAz)
@@ -2905,7 +2914,7 @@ namespace GS.Server.SkyTelescope
                     return $"{axisName} unknown error";
             }
         }
-        
+
         /// <summary>
         /// Makes sure the axes are at full stop
         /// </summary>
@@ -3075,7 +3084,7 @@ namespace GS.Server.SkyTelescope
                 switch (SkySettings.AlignmentMode)
                 {
                     case AlignmentModes.algAltAz:
-                        if ((Altitude <= SkySettings.AxisHzTrackingLimit 
+                        if ((Altitude <= SkySettings.AxisHzTrackingLimit
                              || Altitude <= SkySettings.AxisLowerLimitY
                              || Altitude >= SkySettings.AxisUpperLimitY) && Tracking)
                         {
@@ -3155,7 +3164,7 @@ namespace GS.Server.SkyTelescope
                         GoToPark();
                     }
                 }
-            } 
+            }
         }
 
         /// <summary>
@@ -3242,7 +3251,7 @@ namespace GS.Server.SkyTelescope
         /// <returns></returns>
         private static Vector ConvertRateToAltAz(double haRate, double decRate, double targetDec)
         {
-            var change = new Vector(0,0);
+            var change = new Vector(0, 0);
             if (double.IsNaN(targetDec)) { return change; }
 
             var azimuthRate = new Vector(); // [X,Y] = [ha, dec]
@@ -3430,45 +3439,79 @@ namespace GS.Server.SkyTelescope
             {
                 case AltAzTrackingType.Predictor:
                     double[] delta = { 0.0, 0.0 };
+
                     if (SkyPredictor.RaDecSet)
                     {
-                        // Update mount position
+                        // Ensure Steps and mount position are up to date
                         MountPositionUpdated = false;
                         UpdateSteps();
-                        while (!MountPositionUpdated) Thread.Sleep(10);
+                        while (!MountPositionUpdated)
+                            Thread.Sleep(10);
+
                         var steps = Steps;
+
+                        // Predict future time
                         DateTime nextTime = HiResDateTime.UtcNow.AddMilliseconds(SkySettings.AltAzTrackingUpdateInterval);
-                        var raDec = SkyPredictor.GetRaDecAtTime(nextTime);
-                        // get required target position in topo coordinates
-                        var internalRaDec = Transforms.CoordTypeToInternal(raDec[0], raDec[1]);
-                        var skyTarget = Coordinate.RaDec2AltAz(internalRaDec.X, internalRaDec.Y, GetLocalSiderealTime(nextTime), SkySettings.Latitude);
+
+                        // Predict future RA/Dec
+                        var raDecFuture = SkyPredictor.GetRaDecAtTime(nextTime);
+
+                        // Convert to internal coordinate system
+                        var internalRaDec = Transforms.CoordTypeToInternal(raDecFuture[0], raDecFuture[1]);
+
+                        // Compute LST at the future time
+                        var lstFuture = GetLocalSiderealTime(nextTime);
+
+                        // Convert RA/Dec → Alt/Az
+                        var skyTarget = Coordinate.RaDec2AltAz(
+                            internalRaDec.X,
+                            internalRaDec.Y,
+                            lstFuture,
+                            SkySettings.Latitude
+                        );
+
+                        // Convert Alt/Az → mount axes
                         Array.Reverse(skyTarget);
-                        skyTarget = GetSyncedAxes(skyTarget);
-                        var rawPositions = new[] { ConvertStepsToDegrees(steps[0], 0), ConvertStepsToDegrees(steps[1], 1) };
-                        delta[0] = Range.Range180((skyTarget[0] - rawPositions[0]));
-                        delta[1] = Range.Range180((skyTarget[1] - rawPositions[1]));
-                        const double milliSecond = 0.001;
-                        _skyTrackingRate.X = delta[0] / (SkySettings.AltAzTrackingUpdateInterval * milliSecond);
-                        _skyTrackingRate.Y = delta[1] / (SkySettings.AltAzTrackingUpdateInterval * milliSecond);
-                        var monitorItem = new MonitorEntry
+
+                        // Apply pointing model (forward)
+                        double haFuture = Coordinate.Ra2Ha24(raDecFuture[0], lstFuture);
+                        skyTarget = GetCorrectedAxes(skyTarget, haFuture);
+
+                        // Current corrected mount axes
+                        var correctedNow = new[]
+                        {
+                            ConvertStepsToDegrees(steps[0], 0),
+                            ConvertStepsToDegrees(steps[1], 1)
+                        };
+
+                        // Compute deltas
+                        delta[0] = Range.Range180(skyTarget[0] - correctedNow[0]);
+                        delta[1] = Range.Range180(skyTarget[1] - correctedNow[1]);
+
+                        // Convert to rates (deg/sec)
+                        const double ms = 0.001;
+                        _skyTrackingRate.X = delta[0] / (SkySettings.AltAzTrackingUpdateInterval * ms);
+                        _skyTrackingRate.Y = delta[1] / (SkySettings.AltAzTrackingUpdateInterval * ms);
+
+                        // Log
+                        MonitorLog.LogToMonitor(new MonitorEntry
                         {
                             Datetime = HiResDateTime.UtcNow,
                             Device = MonitorDevice.Server,
                             Category = MonitorCategory.Server,
-                        Type = MonitorType.Data,
+                            Type = MonitorType.Data,
                             Method = MethodBase.GetCurrentMethod()?.Name,
                             Thread = Thread.CurrentThread.ManagedThreadId,
                             Message = $"Ra:{internalRaDec.X}|Dec:{internalRaDec.Y}|Azimuth delta:{delta[0]}|Altitude delta:{delta[1]}"
-                        };
-                        MonitorLog.LogToMonitor(monitorItem);
+                        });
                     }
                     break;
+
                 case AltAzTrackingType.Rate:
                     _skyTrackingRate = ConvertRateToAltAz(CurrentTrackingRate(), 0.0, DeclinationXForm);
                     break;
             }
         }
-
         /// <summary>
         /// Cancel all currently executing async operations
         /// </summary>
@@ -3481,15 +3524,15 @@ namespace GS.Server.SkyTelescope
                 _ctsPulseGuideRa?.Cancel();
                 _ctsHcPulseGuide?.Cancel();
                 var sw = Stopwatch.StartNew();
-                while (_ctsGoTo != null &&_ctsPulseGuideDec != null && _ctsPulseGuideRa != null && _ctsHcPulseGuide != null && sw.ElapsedMilliseconds< 2000)
+                while (_ctsGoTo != null && _ctsPulseGuideDec != null && _ctsPulseGuideRa != null && _ctsHcPulseGuide != null && sw.ElapsedMilliseconds < 2000)
                     Thread.Sleep(200); // wait for any pending pulse guide operations to wake up and cancel
             }
         }
 
         /// <summary>
-/// Calculates the current RA tracking rate used in arc seconds per second
-/// </summary>
-/// <returns></returns>
+        /// Calculates the current RA tracking rate used in arc seconds per second
+        /// </summary>
+        /// <returns></returns>
         public static double CurrentTrackingRate()
         {
             double rate;
@@ -3693,7 +3736,7 @@ namespace GS.Server.SkyTelescope
         private static double[] GetDefaultPositions()
         {
             // set default home position or get home override from the settings 
-            double[] positions = {0, 0};
+            double[] positions = { 0, 0 };
             string name = String.Empty;
             // home axes are mount values
             _homeAxes = GetHomeAxes(SkySettings.HomeAxisX, SkySettings.HomeAxisY);
@@ -4455,7 +4498,7 @@ namespace GS.Server.SkyTelescope
                     }
                     break;
                 case HcMode.Pulse:
-                    HcPulseMoveAsync(speed,direction);
+                    HcPulseMoveAsync(speed, direction);
                     return;
                 default:
                     change[0] = 0;
@@ -4794,9 +4837,9 @@ namespace GS.Server.SkyTelescope
                 if (hpGs == null) { return; }
 
                 var hcSpeed = (int)speed;  // selected HC speed
-                var exist = hpGs.Any(x => x.Speed == hcSpeed); 
+                var exist = hpGs.Any(x => x.Speed == hcSpeed);
                 if (!exist) { return; }  // could do a default here
-            
+
                 var hcPulseGuide = hpGs.Find(x => x.Speed == hcSpeed);
                 GuideDirections pulseDirection;
                 switch (direction)
@@ -4883,26 +4926,26 @@ namespace GS.Server.SkyTelescope
         /// <param name="pulseDirection">direction button from the HC</param>
         /// <param name="token">CancellationToken</param>
         /// <returns></returns>
-        public static int HcPulseMove(HcPulseGuide hcPulseGuide,GuideDirections pulseDirection,CancellationToken token)
+        public static int HcPulseMove(HcPulseGuide hcPulseGuide, GuideDirections pulseDirection, CancellationToken token)
         {
             try
             {
                 var direction = pulseDirection;
                 var duration = hcPulseGuide.Duration;
                 var interval = hcPulseGuide.Interval;
-                if (duration <= 0){return 2;}
-                if (interval < 0){return 2;}
+                if (duration <= 0) { return 2; }
+                if (interval < 0) { return 2; }
 
                 while (true)
                 {
-                    if (token.IsCancellationRequested){break;}
+                    if (token.IsCancellationRequested) { break; }
                     PulseGuide(direction, duration, hcPulseGuide.Rate);
-                    if (token.IsCancellationRequested){break;}
+                    if (token.IsCancellationRequested) { break; }
                     Thread.Sleep(duration);
                     HcPulseDone = true;
                     Thread.Sleep(interval);
                     HcPulseDone = false;
-                } 
+                }
                 return 0;
             }
             catch (Exception ex)
@@ -5018,8 +5061,8 @@ namespace GS.Server.SkyTelescope
                         positionsSet = true;
 
                     }
-                    // Update AlignmentModel settings.
-                    ConnectAlignmentModel();
+
+                    InitialiseAlignmentModel();
 
                     break;
                 case MountType.SkyWatcher:
@@ -5044,7 +5087,7 @@ namespace GS.Server.SkyTelescope
                         Type = MonitorType.Information,
                         Method = MethodBase.GetCurrentMethod()?.Name,
                         Thread = Thread.CurrentThread.ManagedThreadId,
-                        Message = $"Voltage|{SkyServer.ControllerVoltage.ToString("F2")+ " V"}"
+                        Message = $"Voltage|{SkyServer.ControllerVoltage.ToString("F2") + " V"}"
                     };
                     MonitorLog.LogToMonitor(monitorItem);
                     // defaults
@@ -5139,8 +5182,8 @@ namespace GS.Server.SkyTelescope
 
                     }
 
-                    // Update AlignmentModel settings.
-                    ConnectAlignmentModel();
+                    //Initialise the Alignment Model
+                    InitialiseAlignmentModel();
 
                     break;
                 default:
@@ -5191,13 +5234,13 @@ namespace GS.Server.SkyTelescope
                 File.Copy(userConfigFilepath, Path.Combine(logDirectoryPath, "user.config"), true);
 
                 monitorItem = new MonitorEntry
-                    { Datetime = HiResDateTime.UtcNow, Device = MonitorDevice.Server, Category = MonitorCategory.Mount, Type = MonitorType.Information, Method = MethodBase.GetCurrentMethod()?.Name, Thread = Thread.CurrentThread.ManagedThreadId, Message = $"Copied user.config to {logDirectoryPath}" };
+                { Datetime = HiResDateTime.UtcNow, Device = MonitorDevice.Server, Category = MonitorCategory.Mount, Type = MonitorType.Information, Method = MethodBase.GetCurrentMethod()?.Name, Thread = Thread.CurrentThread.ManagedThreadId, Message = $"Copied user.config to {logDirectoryPath}" };
                 MonitorLog.LogToMonitor(monitorItem);
             }
             catch (Exception e) when (e is ConfigurationErrorsException || e is ArgumentException) // All other exceptions mean app cannot function
             {
                 monitorItem = new MonitorEntry
-                    { Datetime = HiResDateTime.UtcNow, Device = MonitorDevice.Server, Category = MonitorCategory.Mount, Type = MonitorType.Warning, Method = MethodBase.GetCurrentMethod()?.Name, Thread = Thread.CurrentThread.ManagedThreadId, Message = $"Cannot copy user.config. {e.Message} " };
+                { Datetime = HiResDateTime.UtcNow, Device = MonitorDevice.Server, Category = MonitorCategory.Mount, Type = MonitorType.Warning, Method = MethodBase.GetCurrentMethod()?.Name, Thread = Thread.CurrentThread.ManagedThreadId, Message = $"Cannot copy user.config. {e.Message} " };
                 MonitorLog.LogToMonitor(monitorItem);
             }
 
@@ -5221,10 +5264,7 @@ namespace GS.Server.SkyTelescope
                     Simulator.Settings.AutoHomeAxisX = (int)SkySettings.AutoHomeAxisX;
                     Simulator.Settings.AutoHomeAxisY = (int)SkySettings.AutoHomeAxisY;
                     MountQueue.Start();
-                    if (MountQueue.IsRunning) { ConnectAlignmentModel(); }
-                    else
-                    { throw new Exception("Failed to start simulator queue"); }
-
+                    if (!MountQueue.IsRunning) { throw new Exception("Failed to start simulator queue"); }
                     break;
                 case MountType.SkyWatcher:
                     // open serial port
@@ -5356,16 +5396,16 @@ namespace GS.Server.SkyTelescope
                 switch (axis)
                 {
                     case 0:
-                        if (!IsPulseGuidingDec) 
+                        if (!IsPulseGuidingDec)
                             StopAltAzTrackingTimer();
                         else
                             _ctsPulseGuideDec.Cancel();
                         SkyPredictor.Set(SkyPredictor.Ra - duration * 0.001 * guideRate / SiderealRate, SkyPredictor.Dec);
                         break;
                     case 1:
-                        if (!IsPulseGuidingRa) 
+                        if (!IsPulseGuidingRa)
                             StopAltAzTrackingTimer();
-                        else 
+                        else
                             _ctsPulseGuideRa.Cancel();
                         SkyPredictor.Set(SkyPredictor.Ra, SkyPredictor.Dec + duration * guideRate * 0.001);
                         break;
@@ -5444,7 +5484,7 @@ namespace GS.Server.SkyTelescope
             MonitorLog.LogToMonitor(monitorItem);
 
             var useAltRate = Math.Abs(altRate) > 0;
-            
+
             switch (direction)
             {
                 case GuideDirections.guideNorth:
@@ -5471,7 +5511,7 @@ namespace GS.Server.SkyTelescope
                             {
                                 if (direction == GuideDirections.guideSouth) { decGuideRate = -decGuideRate; }
                             }
-                            if(PolarMode == PolarMode.Left) decGuideRate = -decGuideRate; // Swap direction because primary OTA is flipped
+                            if (PolarMode == PolarMode.Left) decGuideRate = -decGuideRate; // Swap direction because primary OTA is flipped
                             break;
                         case AlignmentModes.algGermanPolar:
                             if (SideOfPier == PierSide.pierEast)
@@ -6491,23 +6531,39 @@ namespace GS.Server.SkyTelescope
         /// <returns>False is out of limit</returns>
         public static bool CheckRaDecSyncLimit(double ra, double dec)
         {
-            if (!SkySettings.SyncLimitOn) { return true; }
-            if (SkySettings.NoSyncPastMeridian) { return false; } // add more checks later if needed
+            if (!SkySettings.SyncLimitOn)
+                return true;
 
-            //convert ra dec to mount XY positions
+            if (SkySettings.NoSyncPastMeridian)
+                return false;
+
+            // Convert target RA/Dec → mount XY
             var xy = Axes.RaDecToAxesXy(new[] { ra, dec });
-            //convert to app coordinates
-            var target = Axes.AxesMountToApp(GetSyncedAxes(xy));
 
-            //get current mount position in app coordinates
+            // Compute hour angle for the *target* RA
+            double ha = Coordinate.Ra2Ha24(ra, SiderealTime);
+
+            // Apply pointing model (forward) to get corrected axes
+            var corrected = GetCorrectedAxes(xy, ha);
+
+            // Convert corrected axes → app coordinates
+            var target = Axes.AxesMountToApp(corrected);
+
+            // Current mount position in app coordinates
             var current = new[] { _appAxisX, _appAxisY };
-            //compare ra dec / az alt to current mount position
-            var a = Math.Abs(target[0]) - Math.Abs(current[0]);
-            var b = Math.Abs(target[1]) - Math.Abs(current[1]);
-            var ret = !(Math.Abs(a) > SkySettings.SyncLimit || Math.Abs(b) > SkySettings.SyncLimit);
-            if (ret) return true;
 
-            var monitorItem = new MonitorEntry
+            // Compare target vs current
+            var dx = Math.Abs(target[0]) - Math.Abs(current[0]);
+            var dy = Math.Abs(target[1]) - Math.Abs(current[1]);
+
+            bool withinLimit = !(Math.Abs(dx) > SkySettings.SyncLimit ||
+                                 Math.Abs(dy) > SkySettings.SyncLimit);
+
+            if (withinLimit)
+                return true;
+
+            // Log failure
+            MonitorLog.LogToMonitor(new MonitorEntry
             {
                 Datetime = HiResDateTime.UtcNow,
                 Device = MonitorDevice.Server,
@@ -6516,11 +6572,9 @@ namespace GS.Server.SkyTelescope
                 Method = MethodBase.GetCurrentMethod()?.Name,
                 Thread = Thread.CurrentThread.ManagedThreadId,
                 Message = $"{xy[0]}|{xy[1]}|{target[0]}|{target[1]}|{current[0]}|{current[1]}|{SkySettings.SyncLimit}"
-            };
-            MonitorLog.LogToMonitor(monitorItem);
+            });
 
             return false;
-
         }
 
         /// <summary>
@@ -6531,33 +6585,49 @@ namespace GS.Server.SkyTelescope
         /// <returns>False is out of limit</returns>
         public static bool CheckAltAzSyncLimit(double alt, double az)
         {
-            if (!SkySettings.SyncLimitOn) { return true; }
-            if (SkySettings.NoSyncPastMeridian) { return false; } // add more checks later if needed
+            if (!SkySettings.SyncLimitOn)
+                return true;
 
-            //convert ra dec to mount XY positions
+            if (SkySettings.NoSyncPastMeridian)
+                return false;
+
+            // Convert Alt/Az → mount XY axes
             var xy = Axes.AzAltToAxesXy(new[] { az, alt });
-            //convert to app coordinates
-            var target = Axes.AxesMountToApp(GetSyncedAxes(xy));
 
-            //get current mount position in app coordinates
+            // Apply pointing model (forward)
+            // Hour angle is irrelevant for AltAz models → pass 0.0
+            var corrected = GetCorrectedAxes(xy, 0.0);
+
+            // Convert corrected axes → app coordinates
+            var target = Axes.AxesMountToApp(corrected);
+
+            // Current mount position in app coordinates
             var current = new[] { _appAxisX, _appAxisY };
 
+            // Special case: pure AltAz alignment mode
             if (SkySettings.AlignmentMode == AlignmentModes.algAltAz)
             {
+                // In AltAz mode, target is simply the raw alt/az
                 target[0] = az;
                 target[1] = alt;
+
+                // Current azimuth must be wrapped to 0–360
                 current[0] = Range.Range360(_appAxisX);
                 current[1] = _appAxisY;
             }
 
-            //compare ra dec to current position
-            var a = Math.Abs(target[0]) - Math.Abs(current[0]);
-            var b = Math.Abs(target[1]) - Math.Abs(current[1]);
-            var ret = !(Math.Abs(a) > SkySettings.SyncLimit || Math.Abs(b) > SkySettings.SyncLimit);
+            // Compare target vs current
+            var dx = Math.Abs(target[0]) - Math.Abs(current[0]);
+            var dy = Math.Abs(target[1]) - Math.Abs(current[1]);
 
-            if (ret) return true;
+            bool withinLimit = !(Math.Abs(dx) > SkySettings.SyncLimit ||
+                                 Math.Abs(dy) > SkySettings.SyncLimit);
 
-            var monitorItem = new MonitorEntry
+            if (withinLimit)
+                return true;
+
+            // Log failure
+            MonitorLog.LogToMonitor(new MonitorEntry
             {
                 Datetime = HiResDateTime.UtcNow,
                 Device = MonitorDevice.Server,
@@ -6566,12 +6636,10 @@ namespace GS.Server.SkyTelescope
                 Method = MethodBase.GetCurrentMethod()?.Name,
                 Thread = Thread.CurrentThread.ManagedThreadId,
                 Message = $"{xy[0]}|{xy[1]}|{target[0]}|{target[1]}|{current[0]}|{current[1]}|{SkySettings.SyncLimit}"
-            };
-            MonitorLog.LogToMonitor(monitorItem);
+            });
 
             return false;
         }
-
         /// <summary>
         /// Maps a slew target to the corresponding axes based on the specified slew type.
         /// </summary>
@@ -6587,33 +6655,52 @@ namespace GS.Server.SkyTelescope
         /// <returns>An array of doubles representing the target coordinates mapped to the appropriate axes.</returns>
         public static double[] MapSlewTargetToAxes(double[] target, SlewType slewType)
         {
-            // Convert target to axes based on slew type
             switch (slewType)
             {
                 case SlewType.SlewRaDec:
-                    // convert target to axis for Ra / Dec slew
-                    target = Axes.RaDecToAxesXy(target);
-                    // Convert to synced axes
-                    target = GetSyncedAxes(target);
-                    break;
+                    {
+                        // Extract RA before converting to axes
+                        double ra = target[0];
+
+                        // Convert RA/Dec → mount XY axes
+                        target = Axes.RaDecToAxesXy(target);
+
+                        // Compute hour angle for the *target* RA
+                        double ha = Coordinate.Ra2Ha24(ra, SiderealTime);
+
+                        // Apply pointing model (forward)
+                        target = GetCorrectedAxes(target, ha);
+                        break;
+                    }
+
                 case SlewType.SlewAltAz:
-                    // convert target to axis for Az / Alt slew
-                    target = Axes.AzAltToAxesXy(target);
-                    break;
+                    {
+                        // Convert Alt/Az → mount XY axes
+                        target = Axes.AzAltToAxesXy(target);
+
+                        // AltAz models ignore hour angle → pass 0.0
+                        target = GetCorrectedAxes(target, 0.0);
+                        break;
+                    }
+
                 case SlewType.SlewHome:
                     break;
+
                 case SlewType.SlewPark:
-                    // convert to mount coordinates for park
                     target = Axes.AxesAppToMount(target);
                     break;
+
                 case SlewType.SlewMoveAxis:
                     target = Axes.AxesAppToMount(target);
                     break;
+
                 default:
                     break;
             }
+
             return target;
         }
+
 
         internal static bool IsTargetWithinLimits(double[] target)
         {
@@ -6656,11 +6743,11 @@ namespace GS.Server.SkyTelescope
         #endregion
 
         #region Alignment
-
-        private static void ConnectAlignmentModel()
+        private static void InitialiseAlignmentModel()
         {
-            AlignmentModel.Connect(_homeAxes.X, _homeAxes.Y, StepsPerRevolution, AlignmentSettings.ClearModelOnStartup);
+            AlignmentModel.Initialise(AlignmentSettings.ClearModelOnStartup);
         }
+
 
         private static void AlignmentModel_Notification(object sender, NotificationEventArgs e)
         {
@@ -6679,61 +6766,90 @@ namespace GS.Server.SkyTelescope
         }
         internal static double DegToRad(double degree) { return (degree / 180.0 * Math.PI); }
         internal static double RadToDeg(double rad) { return (rad / Math.PI * 180.0); }
+
+
+
         private static void AddAlignmentPoint()
         {
-            // At this point:
-            //      SkyServer.Steps contains the current encoder positions.
-            //      SkyServer.FactorStep contains the conversion from radians to steps
-            // To get the target steps
-            var a = Transforms.CoordTypeToInternal(TargetRa, TargetDec);
-            var xy = Axes.RaDecToAxesXy(new[] { a.X, a.Y });
-            var unSynced = Axes.AxesAppToMount(new[] { xy[0], xy[1] });
+            // 1. Compute ideal mount angles from the target RA/Dec
+            //    This uses your existing transform pipeline.
+            var internalCoord = Transforms.CoordTypeToInternal(TargetRa, TargetDec);
+            var xy = Axes.RaDecToAxesXy(new[] { internalCoord.X, internalCoord.Y });
+            var idealArray = Axes.AxesAppToMount(new[] { xy[0], xy[1] });
+            var ideal = new AxisPosition(idealArray[0], idealArray[1]);
+            DateTime utcNow = HiResDateTime.UtcNow;
+
+            // 2. Read raw mount steps and convert to degrees
             var rawSteps = GetRawSteps();
-            var synced = new[] { ConvertStepsToDegrees(rawSteps[0], 0), ConvertStepsToDegrees(rawSteps[1], 1) };
-            if (AlignmentModel.SyncToRaDec(
-                unSynced,
-                synced,
-                DateTime.Now))
+            var unsynced = new AxisPosition(
+                ConvertStepsToDegrees(rawSteps[0], 0),
+                ConvertStepsToDegrees(rawSteps[1], 1)
+            );
+
+            // 3. Create the alignment point
+            var p = new AlignmentPoint
             {
-                var monitorItem = new MonitorEntry
-                {
-                    Datetime = HiResDateTime.UtcNow,
-                    Device = MonitorDevice.Server,
-                    Category = MonitorCategory.Alignment,
-                    Type = MonitorType.Information,
-                    Method = MethodBase.GetCurrentMethod()?.Name,
-                    Thread = Thread.CurrentThread.ManagedThreadId,
-                    Message = $"Alignment point added: Un-synced axis = {unSynced[0]}/{unSynced[1]}, RA/Dec = {a.X}/{a.Y}, Synched axis = {synced[0]}/{synced[1]}"
-                };
-                MonitorLog.LogToMonitor(monitorItem);
-            }
-            else
+                Unsynced = unsynced,
+                Ideal = ideal,
+                HourAngle = Coordinate.Ra2Ha24(TargetRa, SiderealTime),
+                AlignTime = utcNow
+            };
+
+            // 4. Add to the alignment model
+            AlignmentModel.AddPoint(p);
+
+            // 5. Log success
+            var monitorItem = new MonitorEntry
             {
-                var monitorItem = new MonitorEntry
-                {
-                    Datetime = HiResDateTime.UtcNow,
-                    Device = MonitorDevice.Server,
-                    Category = MonitorCategory.Alignment,
-                    Type = MonitorType.Error,
-                    Method = MethodBase.GetCurrentMethod()?.Name,
-                    Thread = Thread.CurrentThread.ManagedThreadId,
-                    Message = $"Alignment point added: Un-synced axis = {unSynced[0]}/{unSynced[1]}, RA/Dec = {a.X}/{a.Y}, Synched axis = {synced[0]}/{synced[1]}"
-                };
-                MonitorLog.LogToMonitor(monitorItem);
-            }
+                Datetime = utcNow,
+                Device = MonitorDevice.Server,
+                Category = MonitorCategory.Alignment,
+                Type = MonitorType.Information,
+                Method = MethodBase.GetCurrentMethod()?.Name,
+                Thread = Thread.CurrentThread.ManagedThreadId,
+                Message = $"Alignment point added: Raw={p.Unsynced.A1}/{p.Unsynced.A2}, Ideal={p.Ideal.A1}/{p.Ideal.A2}, Ha={p.HourAngle}"
+            };
+            MonitorLog.LogToMonitor(monitorItem);
         }
 
         /// <summary>
-        /// Gets the alignment model corrected target (physical) axis positions for a given calculated axis position.
+        /// Returns the alignment‑model–corrected physical axis angles for a given set
+        /// of ideal (uncorrected) mount axis angles.
+        ///
+        /// This is the forward application of the pointing model.  
+        /// When the alignment model is enabled, the mount slews using corrected axis
+        /// positions rather than the ideal sky‑aligned coordinates. This method applies
+        /// the fitted pointing model to the incoming ideal axis angles and returns the
+        /// mechanically corrected values that should be sent to the mount’s drive
+        /// system.
+        ///
+        /// If the alignment model is disabled, not fitted, or the mount is in a state
+        /// where alignment corrections should not be applied (e.g. homed or parked),
+        /// the input values are returned unchanged.
         /// </summary>
-        /// <param name="unsynced"></param>
-        /// <returns></returns>
-        public static double[] GetSyncedAxes(double[] unsynced)
+        /// <param name="unsynced">
+        /// The ideal, uncorrected axis angles (Az/Alt or HA/Dec) computed from the
+        /// target sky coordinates.
+        /// </param>
+        /// <returns>
+        /// The corrected physical axis angles that should be used for slewing the
+        /// mount.
+        /// </returns>
+        public static double[] GetCorrectedAxes(double[] unsynced, double hourAngle)
         {
-            if (AlignmentModel.IsAlignmentOn && SkyServer.SlewState == SlewType.SlewRaDec && !SkyServer.IsHome && !SkyServer.AtPark)
+            if (AlignmentModel.IsAlignmentOn &&
+                AlignmentModel.IsFitted &&
+                !SkyServer.IsHome &&
+                !SkyServer.AtPark)
             {
-                double[] synced = AlignmentModel.GetSyncedValue(unsynced);
-                var monitorItem = new MonitorEntry
+                var ideal = new AxisPosition(unsynced[0], unsynced[1]);
+
+                // Forward mapping (model decides whether HA matters)
+                var corrected = AlignmentModel.Apply(ideal, hourAngle);
+
+                var synced = new[] { corrected.A1, corrected.A2 };
+
+                MonitorLog.LogToMonitor(new MonitorEntry
                 {
                     Datetime = HiResDateTime.UtcNow,
                     Device = MonitorDevice.Server,
@@ -6742,67 +6858,67 @@ namespace GS.Server.SkyTelescope
                     Method = MethodBase.GetCurrentMethod()?.Name,
                     Thread = Thread.CurrentThread.ManagedThreadId,
                     Message = $"Mapped un-synced axis angles: {unsynced[0]}/{unsynced[1]} to {synced[0]}/{synced[1]}"
-                };
-                MonitorLog.LogToMonitor(monitorItem);
+                });
 
-                // For safety, check the difference is within the max unsynced/synched difference found in the alignment model.
-                var a = Math.Abs(unsynced[0] - synced[0]);
-                var b = Math.Abs(unsynced[1] - synced[1]);
-                double[] maxDelta = AlignmentModel.MaxDelta;
-                if (Math.Abs(a) > maxDelta[0] * AlignmentModel.AlignmentWarningThreshold || Math.Abs(b) > maxDelta[1] * AlignmentModel.AlignmentWarningThreshold)
-                {
-                    // Log a warning message, switch off the alignment model and return the original calculated position.
-                    monitorItem = new MonitorEntry
-                    {
-                        Datetime = HiResDateTime.UtcNow,
-                        Device = MonitorDevice.Server,
-                        Category = MonitorCategory.Alignment,
-                        Type = MonitorType.Warning,
-                        Method = MethodBase.GetCurrentMethod()?.Name,
-                        Thread = Thread.CurrentThread.ManagedThreadId,
-                        Message = $"Large delta: {unsynced[0]}|{unsynced[1]}|{synced[0]}|{synced[1]}|{maxDelta[0]}|{maxDelta[1]}"
-                    };
-                    MonitorLog.LogToMonitor(monitorItem);
-                    AlignmentSettings.IsAlertOn = true;
-                    return unsynced;
-                }
-                else
-                {
-                    return synced;
-                }
+                return synced;
             }
-            else
-            {
-                return unsynced;
-            }
+
+            return unsynced;
         }
 
         /// <summary>
-        /// Get the axis positions to report for a given physical axis position.
+        /// Returns the *ideal* (uncorrected) mount axis positions that correspond
+        /// to a given set of *corrected* physical axis positions.
+        ///
+        /// This is the inverse of <see cref="GetSyncedAxes"/>.  
+        /// When the alignment model is enabled, the mount slews using corrected
+        /// axis angles, but clients (ASCOM, UI, etc.) expect the ideal sky‑aligned
+        /// coordinates. This method reverses the pointing model correction so the
+        /// reported position reflects the true sky position rather than the
+        /// mechanically adjusted one.
+        ///
+        /// If the alignment model is disabled, not fitted, or the mount is in a
+        /// state where alignment corrections should not be applied (e.g. homed or
+        /// parked), the input values are returned unchanged.
         /// </summary>
-        /// <param name="synced"></param>
-        /// <returns></returns>
-        private static double[] GetUnsyncedAxes(double[] synced)
+        /// <param name="corrected">
+        /// The corrected physical axis angles (Az/Alt or HA/Dec) currently being
+        /// used by the mount’s mechanics.
+        /// </param>
+        /// <returns>
+        /// The ideal, uncorrected axis angles that correspond to the same sky
+        /// position, suitable for reporting to clients.
+        /// </returns>
+        public static double[] GetIdealAxes(double[] corrected, double hourAngle)
         {
-
-            if (AlignmentModel.IsAlignmentOn && SkyServer.SlewState != SlewType.SlewPark && SkyServer.SlewState != SlewType.SlewHome
-                && !SkyServer.IsHome && !SkyServer.AtPark)
+            if (AlignmentModel.IsAlignmentOn &&
+                SkyServer.SlewState == SlewType.SlewRaDec &&
+                !SkyServer.IsHome &&
+                !SkyServer.AtPark &&
+                AlignmentModel.IsFitted)
             {
-                //var monitorItem = new MonitorEntry
-                //{
-                //    Datetime = HiResDateTime.UtcNow,
-                //    Device = MonitorDevice.Server,
-                //    Category = MonitorCategory.Alignment,
-                //    Type = MonitorType.Data,
-                //    Method = MethodBase.GetCurrentMethod()?.Name,
-                //    Thread = Thread.CurrentThread.ManagedThreadId,
-                //    Message = $"Mapped synced axis angles: {synced[0]}/{synced[1]} to {unsynced[0]}/{unsynced[1]}"
-                //};
-                //MonitorLog.LogToMonitor(monitorItem);
-                return AlignmentModel.GetUnsyncedValue(synced);
+                var correctedPos = new AxisPosition(corrected[0], corrected[1]);
+
+                // Reverse mapping
+                var ideal = AlignmentModel.ApplyReverse(correctedPos, hourAngle);
+
+                var idealArray = new[] { ideal.A1, ideal.A2 };
+
+                MonitorLog.LogToMonitor(new MonitorEntry
+                {
+                    Datetime = HiResDateTime.UtcNow,
+                    Device = MonitorDevice.Server,
+                    Category = MonitorCategory.Alignment,
+                    Type = MonitorType.Information,
+                    Method = MethodBase.GetCurrentMethod()?.Name,
+                    Thread = Thread.CurrentThread.ManagedThreadId,
+                    Message = $"Reverse mapped corrected axis angles: {corrected[0]}/{corrected[1]} to ideal {idealArray[0]}/{idealArray[1]}"
+                });
+
+                return idealArray;
             }
 
-            return synced;
+            return corrected;
         }
         #endregion
 
@@ -6813,15 +6929,6 @@ namespace GS.Server.SkyTelescope
             {
                 case "AtPark":
                     if (AtPark != SkySettings.AtPark) AtPark = SkySettings.AtPark;
-                    break;
-                case "Latitude":
-                    AlignmentModel.SiteLatitude = SkySettings.Latitude;
-                    break;
-                case "Longitude":
-                    AlignmentModel.SiteLongitude = SkySettings.Longitude;
-                    break;
-                case "Elevation":
-                    AlignmentModel.SiteElevation = SkySettings.Elevation;
                     break;
                 case "AlignmentMode":
                     Tracking = false;
@@ -6835,21 +6942,6 @@ namespace GS.Server.SkyTelescope
             {
                 case "IsAlignmentOn":
                     AlignmentModel.IsAlignmentOn = AlignmentSettings.IsAlignmentOn;
-                    break;
-                case "ProximityLimit":
-                    AlignmentModel.ProximityLimit = AlignmentSettings.ProximityLimit;
-                    break;
-                case "AlignmentBehaviour":
-                    AlignmentModel.AlignmentBehaviour = AlignmentSettings.AlignmentBehaviour;
-                    break;
-                case "ActivePoints":
-                    AlignmentModel.ActivePoints = AlignmentSettings.ActivePoints;
-                    break;
-                case "ThreePointAlgorithm":
-                    AlignmentModel.ThreePointAlgorithm = AlignmentSettings.ThreePointAlgorithm;
-                    break;
-                case "AlignmentWarningThreshold":
-                    AlignmentModel.AlignmentWarningThreshold = AlignmentSettings.AlignmentWarningThreshold;
                     break;
             }
         }
@@ -6919,7 +7011,7 @@ namespace GS.Server.SkyTelescope
 
             // invalidate target positions
             _targetRaDec = new Vector(double.NaN, double.NaN);
-           SkyPredictor.Reset();
+            SkyPredictor.Reset();
 
             //default hand control and slew rates
             SetSlewRates(SkySettings.MaxSlewRate);
@@ -7079,7 +7171,7 @@ namespace GS.Server.SkyTelescope
                 var t = SkySettings.DisplayInterval; // Event interval time set for UI performance 
                 _mediaTimer.Period = t;
 
-                if (LoopCounter % (ulong) Settings.Settings.ModelIntFactor == 0)
+                if (LoopCounter % (ulong)Settings.Settings.ModelIntFactor == 0)
                 {
                     Rotate3DModel = true;
                 }

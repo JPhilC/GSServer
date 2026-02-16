@@ -1,16 +1,12 @@
+using ASCOM.DeviceInterface;
+using GS.Server.SkyTelescope;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Linq;
-using ASCOM.DeviceInterface;
-using GS.Server.SkyTelescope;
-using GS.Shared.Domain;
 
 namespace GS.Server.Alignment
 {
@@ -23,52 +19,6 @@ namespace GS.Server.Alignment
         Debug
     }
 
-    [TypeConverter(typeof(EnumTypeConverter))]
-    public enum PierSideEnum
-    {
-        [Description("Unknown")]
-        Unknown = -1,
-        [Description("East")]
-        EastLookingWest,
-        [Description("West")]
-        WestLookingEast,
-    }
-
-    [TypeConverter(typeof(EnumTypeConverter))]
-    public enum ActivePointsEnum
-    {
-        [Description("All")]
-        All,
-        [Description("Pierside Only")]
-        PierSide,
-        [Description("Local Quadrant")]
-        LocalQuadrant
-    }
-
-    [TypeConverter(typeof(EnumTypeConverter))]
-    public enum ThreePointAlgorithmEnum
-    {
-        [Description("Best Centre")]
-        BestCentre,
-        [Description("Closest Points")]
-        ClosestPoints
-    }
-
-    [TypeConverter(typeof(EnumTypeConverter))]
-    public enum AlignmentBehaviourEnum
-    {
-        [Description("N-Star + Nearest")]
-        NStarPlusNearest,
-        [Description("Nearest")]
-        Nearest
-    }
-
-
-    public enum HemisphereEnum
-    {
-        Northern,
-        Southern
-    }
 
     public class NotificationEventArgs : EventArgs
     {
@@ -88,7 +38,7 @@ namespace GS.Server.Alignment
         }
     }
 
-    public partial class AlignmentModel
+    public sealed class AlignmentModel
     {
         #region Events ...
 
@@ -101,295 +51,122 @@ namespace GS.Server.Alignment
 
         #endregion
 
-        #region variables ...
-        private readonly List<string> _exceptionMessages = new List<string>();
-
-        private bool _threeStarEnabled;
-        #endregion
-
-        #region Properties ...
-
-
         public bool IsAlignmentOn { get; set; }
 
-        private double _proximityLimit = 0.5;
-        /// <summary>
-        /// How close existing alignment points have to be to the new alignment point
-        /// before they are removed and replaced with the new one (degrees)
-        /// </summary>
-        public double ProximityLimit
-        {
-            get => _proximityLimit;
-            set
-            {
-                if (Math.Abs(_proximityLimit - value) < 0.000001) return;
-                _proximityLimit = value;
-            }
-        }
+        public AlignmentModes AlignmentMode { get; }
 
+        public IPointingModel Model { get; private set; }
 
-        private double _siteLongitude;
-        public double SiteLongitude
-        {
-            get => _siteLongitude;
-            set
-            {
-                if (_siteLongitude == value) return;
-                _siteLongitude = value;
-                SendToMatrix();
-            }
-        }
+        public AlignmentPointCollection Points { get; }
 
-        private double _siteLatitude;
-        public double SiteLatitude
-        {
-            get => _siteLatitude;
-            set
-            {
-                if (_siteLatitude == value) return;
-                _siteLatitude = value;
-                Hemisphere = (_siteLatitude >= 0 ? HemisphereEnum.Northern : HemisphereEnum.Southern);
-                SendToMatrix();     // Refresh the matrices as these are affected by the site latitude
-            }
-        }
+        public bool IsFitted => Model?.IsFitted ?? false;
 
-        public HemisphereEnum Hemisphere { get; private set; } = HemisphereEnum.Northern;
-
-        private double _siteElevation;
-        public double SiteElevation
-        {
-            get => _siteElevation;
-            set
-            {
-                if (_siteElevation == value) return;
-                _siteElevation = value;
-            }
-        }
-
-        private AlignmentBehaviourEnum _alignmentBehaviour = AlignmentBehaviourEnum.NStarPlusNearest;
-        public AlignmentBehaviourEnum AlignmentBehaviour
-        {
-            get => _alignmentBehaviour;
-            set
-            {
-                if (_alignmentBehaviour == value) return;
-                _alignmentBehaviour = value;
-            }
-        }
-
-        private ThreePointAlgorithmEnum _threePointAlgorithm = ThreePointAlgorithmEnum.BestCentre;
-        public ThreePointAlgorithmEnum ThreePointAlgorithm
-        {
-            get => _threePointAlgorithm;
-            set
-            {
-                if (_threePointAlgorithm == value) return;
-                _threePointAlgorithm = value;
-            }
-        }
-
-        private int _alignmentWarningThreshold = 2;
-        public int AlignmentWarningThreshold
-        {
-            get => _alignmentWarningThreshold;
-            set
-            {
-                if (_alignmentWarningThreshold == value) return;
-                _alignmentWarningThreshold = value;
-            }
-        }
-
-
-        public AxisPosition Home { get; private set; }
-
-        /// <summary>
-        /// The Steps per revolution for each axis
-        /// </summary>
-        public long[] StepsPerRev { get; private set; }
-
-        /// <summary>
-        /// EQMOD worked with encoder positions which meant that it was working with a linear scale
-        /// angles used where converted to differences and converted to positions on this linear scale
-        /// GSS uses the axis positions of 90 and 90 for home. This constant represents 90 on the
-        /// linear scale the same as in EQMOD.
-        /// </summary>
-        public long[] ScaleCenter
-        {
-            get
-            {
-                if (SkySettings.AlignmentMode == AlignmentModes.algAltAz)
-                {
-                    return new long[] { 0, 0 };
-                }
-                else
-                {
-                    return new long[] { 9003008, 9003008 };
-                }
-            }
-        }
-
-        private ActivePointsEnum _activePoints;
-        public ActivePointsEnum ActivePoints
-        {
-            get => _activePoints;
-            set
-            {
-                if (_activePoints == value) return;
-                _activePoints = value;
-            }
-        }
-
-        public AlignmentPointCollection AlignmentPoints { get; } = new AlignmentPointCollection();
-
-        /// <summary>
-        /// Gets the maximum un-synced/synced difference found in the current alignment points
-        /// </summary>
-        public double[] MaxDelta
-        {
-            get
-            {
-                if (AlignmentPoints.Any())
-                {
-                    double maxRa = Math.Abs(AlignmentPoints.Max(p => Math.Abs(p.Synced.RA - p.Unsynced.RA)));
-                    double maxDec = Math.Abs(AlignmentPoints.Max(p => Math.Abs(p.Synced.Dec - p.Unsynced.Dec)));
-                    return new double[] { maxRa, maxDec };
-                }
-                else
-                {
-                    return new double[] { 1.0e-6d / 3600, 1.0e-6d / 3600 }; // allow for get sync/unsync rounding
-                }
-            }
-        }
-
-        /// <summary>
-        /// Collection of points making up the current triangle
-        /// </summary>
-        public AlignmentPointCollection ChartTrianglePoints { get; } = new AlignmentPointCollection();
-
-        /// <summary>
-        /// Collection containing the alignment point selected outside a triangle
-        /// </summary>
-        public ObservableCollection<CartesCoord> ChartNearestPoint { get; } = new ObservableCollection<CartesCoord>();
-
-        private int? _CurrentNearestPointId;
-
-        /// <summary>
-        /// Collection containing the current position of the telescope
-        /// </summary>
-        public ObservableCollection<CartesCoord> CurrentPoint { get; } = new ObservableCollection<CartesCoord>();
-
-
-        public AlignmentPoint SelectedAlignmentPoint { get; private set; }
-
-        public DateTime? LastAccessDateTime { get; private set; }
-
-        public int NStarMaxCombinationCount { get; set; } = 50;
-
-        // String builder for building more detailed messages.
         private readonly StringBuilder _stringBuilder = new StringBuilder();
 
         private readonly object _accessLock = new object();
 
-        private readonly string _configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EqmodNStarAlignment\Points.config");
+        private readonly string _configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"AlignmentModel\Points.config");
 
-        private readonly string _timeStampFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"EqmodNStarAlignment\TimeStamp.config");
+        private readonly string _timeStampFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"AlignmentModel\TimeStamp.config");
 
-        public CartesCoord EncoderMappingOffset { get; private set; } // Mapping from Mount unsynced positions to internal unsynced positions
+        private readonly List<string> _exceptionMessages = new List<string>();
+
+        public AlignmentModel(AlignmentModes alignmentMode)
+        {
+            AlignmentMode = alignmentMode;
+            Points = new AlignmentPointCollection();
+
+            ResetModel();
+
+        }
 
         /// <summary>
-        /// RA/Dec unsynced adjustments for when there is only one star/point logged.
+        /// Loads previously saved alignment points if appropriate.
+        /// Points are loaded when:
+        ///   - the user has not requested clearing them on startup, OR
+        /// After loading, the model is fitted if enough points exist.
         /// </summary>
-        private CartesCoord _oneStarAdjustment = new CartesCoord(0, 0);
-
-        #endregion
-
-        #region Constructor ...
-        public AlignmentModel(double siteLatitude, double siteLongitude, double siteElevation)
+        public void Initialise(bool clearPointsOnStartup)
         {
-            SiteLatitude = siteLatitude;
-            SiteLongitude = siteLongitude;
-            SiteElevation = siteElevation;
-            AlignmentBehaviour = AlignmentSettings.AlignmentBehaviour;
-            ActivePoints = AlignmentSettings.ActivePoints;
-            ThreePointAlgorithm = AlignmentSettings.ThreePointAlgorithm;
-            AlignmentWarningThreshold = AlignmentSettings.AlignmentWarningThreshold;
-        }
-        #endregion
-
-        public void Connect(double raHome, double decHome, long[] stepsPerRev, bool clearPointsOnStartup = false)
-        {
-            Home = new AxisPosition(raHome, decHome);
-            StepsPerRev = stepsPerRev;
-            try
+            // 1. If the user did NOT request clearing points, load them
+            if (!clearPointsOnStartup)
             {
-                // Load the last access time property.
-                ReadLastAccessTime();
-                // Re-load alignment points unless clear points on start up is specified
-                // In case of lost connections or restarts the points are only cleared if the last time the model was accessed is more than an hour ago.
-                if (!clearPointsOnStartup || (LastAccessDateTime != null &&
-                                              (LastAccessDateTime.Value > DateTime.Now - new TimeSpan(1, 0, 0))))
-                {
-                    LoadAlignmentPoints();
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException(ex, true);
+                Load();   // loads points from _configFile
+                Fit();    // fit if >= 3 points
             }
         }
 
-        #region Alignment point management ...
-        public bool SyncToRaDec(double[] unsynced, double[] synced, DateTime syncTime)
+        /// <summary>
+        /// Add a new alignment point and refit the model.
+        /// </summary>
+        public void AddPoint(AlignmentPoint p)
+        {
+            Points.Add(p);
+            Fit();
+        }
+
+        /// <summary>
+        /// Refit the pointing model using all alignment points.
+        /// </summary>
+        public void Fit()
+        {
+            if (Points.Count < 4)
+                return; // Not enough points yet
+
+            Model.Fit(Points);
+        }
+
+
+        public AxisPosition Apply(AxisPosition ideal, double hourAngle)
+        {
+            if (!IsFitted)
+                return ideal;
+
+            return Model.Apply(ideal, hourAngle);
+        }
+
+        public AxisPosition ApplyReverse(AxisPosition corrected, double hourAngle)
+        {
+            if (!IsFitted)
+                return corrected;
+
+            return Model.ApplyReverse(corrected, hourAngle);
+        }
+
+
+        /// <summary>
+        /// Removes an alignment point from the model and refits the pointing model.
+        /// If fewer than three points remain, the model is reset.
+        /// </summary>
+        /// <param name="pointToDelete">The alignment point to remove.</param>
+        /// <returns>
+        /// True if the point was removed; false if it was not found or an error occurred.
+        /// </returns>
+        public bool RemovePoint(AlignmentPoint pointToDelete)
         {
             try
             {
-                lock (_accessLock)
+                bool removed = Points.Remove(pointToDelete);
+
+                if (removed)
                 {
-                    CartesCoord uXy = EQ_sp2Cs(unsynced);
-                    CartesCoord sXy = EQ_sp2Cs(synced);
-                    AlignmentPoint newPoint = new AlignmentPoint(unsynced, synced, syncTime)
+                    // If fewer than 3 points remain, reset the model
+                    if (Points.Count < 4)
                     {
-                        UnsyncedCartesian = new Coord(){x=uXy.x, y=uXy.y },
-                        SyncedCartesian = new Coord(){x = sXy.x, y=sXy.y}
-                    };
-                    bool result = EQ_NPointAppend(newPoint);
-                    SaveAlignmentPoints();
-
-                    return result;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException(ex, true);
-            }
-            return false;
-        }
-
-
-        public bool RemoveAlignmentPoint(AlignmentPoint pointToDelete)
-        {
-            try
-            {
-                bool result = AlignmentPoints.Remove(pointToDelete);
-                if (result)
-                {
-                    int ptCt = AlignmentPoints.Count();
-                    if (ptCt == 0)
-                    {
-                        _oneStarAdjustment = new CartesCoord(0d, 0d);
+                        // Reset the model instance
+                        ResetModel();
                     }
                     else
                     {
-                        _oneStarAdjustment = new CartesCoord(AlignmentPoints[ptCt - 1].Delta); // Use the last point's delta
+                        // Refit the model with the remaining points
+                        Fit();
                     }
-                    if (ptCt < 3)
-                    {
-                        _threeStarEnabled = false;
-                    }
-                    SaveAlignmentPoints();
+
+                    // Persist the updated point list
+                    Save();
                 }
 
-                return result;
+                return removed;
             }
             catch (Exception ex)
             {
@@ -399,38 +176,63 @@ namespace GS.Server.Alignment
         }
 
 
-        public void SaveAlignmentPoints(string filename)
+        /// <summary>
+        /// Clear all alignment points and reset the model.
+        /// </summary>
+        public void Clear()
         {
-            File.WriteAllText(filename, JsonConvert.SerializeObject(AlignmentPoints, Formatting.Indented));
+            Points.Clear();
+
+            ResetModel();
+
         }
 
-        public void SaveAlignmentPoints()
+
+
+        public void Save()
         {
             var dir = Path.GetDirectoryName(_configFile);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
             }
-            SaveAlignmentPoints(_configFile);
+            Save(_configFile);
             ReportAlignmentPoints();
         }
 
-        public void ExportAlignmentPointTestData(string filename)
+
+        /// <summary>
+        /// Optional: save model parameters + points to disk.
+        /// </summary>
+        public void Save(string path)
         {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine("(int id, double unsyncedRA, double unsyncedDec, double unsynchedX, double unsyncedY, double syncedRA, double syncedDec, double synchedX, double syncedY, string syncTime)");
-            foreach (AlignmentPoint ap in this.AlignmentPoints)
-            {
-                sb.AppendLine(
-                    $"[DataRow({ap.Id}, {ap.Unsynced.RA}, {ap.Unsynced.Dec}, {ap.UnsyncedCartesian.x}, {ap.UnsyncedCartesian.y}, {ap.Synced.RA}, {ap.Synced.Dec}, {ap.SyncedCartesian.x}, {ap.SyncedCartesian.y}, \"{ap.AlignTime:O}\")]");
-            }
-            File.WriteAllText(filename, sb.ToString());
+            // Serialize Points + Model parameters
+            File.WriteAllText(path, JsonConvert.SerializeObject(Points, Formatting.Indented));
         }
 
-        public void LoadAlignmentPoints(string filename)
+
+        private void Load()
         {
-            AlignmentPoints.Clear();
-            using (var file = File.OpenText(filename))
+            var dir = Path.GetDirectoryName(_configFile);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            if (File.Exists(_configFile))
+            {
+                Load(_configFile);
+            }
+            ReportAlignmentPoints();
+        }
+
+        /// <summary>
+        /// Optional: load model parameters + points from disk.
+        /// </summary>
+        public void Load(string path)
+        {
+            // Deserialize Points + Model parameters
+            Points.Clear();
+            using (var file = File.OpenText(path))
             {
                 var serializer = new JsonSerializer();
                 try
@@ -441,10 +243,8 @@ namespace GS.Server.Alignment
                     {
                         foreach (var alignmentPoint in loaded)
                         {
-                            AlignmentPoints.Add(alignmentPoint);
-                            _oneStarAdjustment = new CartesCoord(alignmentPoint.Delta);
+                            Points.Add(alignmentPoint);
                         }
-                        SendToMatrix(); // Updates the cartesean values.
                     }
                 }
                 catch (Exception ex)
@@ -453,30 +253,18 @@ namespace GS.Server.Alignment
                 }
             }
 
+            // Fit the model
+            Fit();
         }
 
-        private void LoadAlignmentPoints()
-        {
-            var dir = Path.GetDirectoryName(_configFile);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-            if (File.Exists(_configFile))
-            {
-                LoadAlignmentPoints(_configFile);
-            }
-            ReportAlignmentPoints();
-        }
+
 
         public void ClearAlignmentPoints()
         {
             try
             {
-                AlignmentPoints.Clear();
-                _oneStarAdjustment = new CartesCoord(0d, 0d);
-                _threeStarEnabled = false;
-                SaveAlignmentPoints();
+                Points.Clear();
+                Save();
             }
             catch (Exception ex)
             {
@@ -484,50 +272,31 @@ namespace GS.Server.Alignment
             }
         }
 
-        #endregion
-
-
-        #region Access time related ...
-        //private void WriteLastAccessTime()
-        //{
-        //    LastAccessDateTime = DateTime.Now;
-        //    var dir = Path.GetDirectoryName(_timeStampFile);
-        //    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-        //    {
-        //        Directory.CreateDirectory(dir);
-        //    }
-        //    File.WriteAllText(_timeStampFile, JsonConvert.SerializeObject(LastAccessDateTime, Formatting.Indented));
-        //}
-
-        private void ReadLastAccessTime()
+        private void ResetModel()
         {
-            var dir = Path.GetDirectoryName(_timeStampFile);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            switch (AlignmentMode)
             {
-                Directory.CreateDirectory(dir);
-            }
-            if (File.Exists(_timeStampFile))
-            {
-                using (var file = File.OpenText(_timeStampFile))
-                {
-                    var serializer = new JsonSerializer();
-                    DateTime? loaded = (DateTime?)serializer.Deserialize(file, typeof(DateTime?));
-                    LastAccessDateTime = loaded;
-                }
+                case AlignmentModes.algGermanPolar:
+                case AlignmentModes.algPolar:
+                    Model = new LinearEquatorialPointingModel();
+                    break;
+
+                case AlignmentModes.algAltAz:
+                    Model = new LinearAltAzPointingModel();
+                    break;
             }
         }
-        #endregion
 
         #region Helper methods ...
         private void ReportAlignmentPoints()
         {
             _stringBuilder.Clear();
             _stringBuilder.AppendLine("=============== Alignment points ===============");
-            _stringBuilder.AppendLine("ID \tUnsynced Ra/Dec         \tSynced RaDec   \tObserved time");
-            foreach (var pt in AlignmentPoints)
+            _stringBuilder.AppendLine("ID \tUnsynced A1/A2         \tIdeal A1/A2   \tObserved time");
+            foreach (var pt in Points)
             {
                 _stringBuilder.AppendLine(
-                    $"{pt.Id:D3}\t{pt.Unsynced.RA}/{pt.Unsynced.Dec}\t{pt.Synced.RA}/{pt.Synced.Dec}\t{pt.AlignTime}");
+                    $"{pt.Id:D3}\t{pt.Unsynced.A1}/{pt.Unsynced.A2}\t{pt.Ideal.A1}/{pt.Ideal.A2}\t{pt.AlignTime}");
             }
             RaiseNotification(NotificationType.Data, MethodBase.GetCurrentMethod()?.Name, _stringBuilder.ToString());
             _stringBuilder.Clear();
@@ -544,5 +313,7 @@ namespace GS.Server.Alignment
         }
 
         #endregion
+
     }
+
 }
