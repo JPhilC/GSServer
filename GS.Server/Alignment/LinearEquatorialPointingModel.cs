@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -33,10 +34,10 @@ namespace GS.Server.Alignment
     /// </summary>
     public sealed class LinearEquatorialPointingModel : IPointingModel
     {
-        private double[] _pH;     // parameters for ΔH
+        private double[] _pHa;     // parameters for ΔH
         private double[] _pDec;   // parameters for ΔDec
 
-        public bool IsFitted => _pH != null && _pDec != null;
+        public bool IsFitted => _pHa != null && _pDec != null;
 
         public void Fit(IEnumerable<AlignmentPoint> points)
         {
@@ -44,33 +45,31 @@ namespace GS.Server.Alignment
             int N = list.Count;
 
             if (N < 3)
-                throw new InvalidOperationException("Not enough alignment points to fit model.");
+                return;
 
-            // Build design matrices
-            var XH = new double[N][];
+            var XHa = new double[N][];
             var XDec = new double[N][];
-            var rH = new double[N];
+            var rHa = new double[N];
             var rDec = new double[N];
 
             for (int i = 0; i < N; i++)
             {
                 var p = list[i];
 
-                var ideal = p.IdealRad;
-                var raw = p.RawRad;
+                AxisPositionRad ideal = p.IdealRad;
+                AxisPositionRad raw = p.RawRad;
 
-                // Residuals
-                rH[i] = raw.A1 - ideal.A1;
+                rHa[i] = raw.A1 - ideal.A1;
                 rDec[i] = raw.A2 - ideal.A2;
 
                 // Basis rows
-                XH[i] = EquatorialBasis.BasisH(ideal);
-                XDec[i] = EquatorialBasis.BasisDec(ideal);
+                XHa[i] = LinearEquatorialBasis.BasisHa(ideal);
+                XDec[i] = LinearEquatorialBasis.BasisDec(ideal);
             }
 
-            // Solve least squares
-            _pH = LinearAlgebra.SolveLeastSquares(XH, rH);
+            _pHa = LinearAlgebra.SolveLeastSquares(XHa, rHa);
             _pDec = LinearAlgebra.SolveLeastSquares(XDec, rDec);
+
         }
 
         public AxisPosition Apply(AxisPosition idealDeg, double hourAngle)
@@ -80,7 +79,7 @@ namespace GS.Server.Alignment
 
             var ideal = idealDeg.ToRad();
 
-            double dH = EvaluateDeltaH(ideal);
+            double dH = EvaluateDeltaHa(ideal);
             double dDec = EvaluateDeltaDec(ideal);
 
             var corrected = new AxisPositionRad(
@@ -100,7 +99,7 @@ namespace GS.Server.Alignment
             var corrected = correctedDeg.ToRad();
 
             // Evaluate the model at the corrected position
-            double dH = EvaluateDeltaH(corrected);
+            double dH = EvaluateDeltaHa(corrected);
             double dDec = EvaluateDeltaDec(corrected);
 
             // Reverse the correction
@@ -112,18 +111,18 @@ namespace GS.Server.Alignment
             return ideal.FromRad();
         }
 
-        private double EvaluateDeltaH(AxisPositionRad m)
+        private double EvaluateDeltaHa(AxisPositionRad m)
         {
-            var b = EquatorialBasis.BasisH(m);
+            var b = LinearEquatorialBasis.BasisHa(m);
             double sum = 0;
             for (int i = 0; i < b.Length; i++)
-                sum += b[i] * _pH[i];
+                sum += b[i] * _pHa[i];
             return sum;
         }
 
         private double EvaluateDeltaDec(AxisPositionRad m)
         {
-            var b = EquatorialBasis.BasisDec(m);
+            var b = LinearEquatorialBasis.BasisDec(m);
             double sum = 0;
             for (int i = 0; i < b.Length; i++)
                 sum += b[i] * _pDec[i];

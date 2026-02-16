@@ -8,7 +8,7 @@ namespace AlignmentModelTests
         public static IPointingModel CreateFullEquatorialModel()
         {
             // Swap this out in future without changing tests
-            return new FullEquatorialPointingModel();
+            return new GlobalEquatorialPointingModel();
         }
 
         public static IPointingModel CreateEquatorialModel()
@@ -28,7 +28,7 @@ namespace AlignmentModelTests
             if (mode == AlignmentModes.algGermanPolar)
             {
                 if (full)
-                    return new FullEquatorialPointingModel();
+                    return new GlobalEquatorialPointingModel();
 
                 return new LinearEquatorialPointingModel();
             }

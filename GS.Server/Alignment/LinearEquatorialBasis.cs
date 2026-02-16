@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace GS.Server.Alignment
 {
-    public static class EquatorialBasis
+    public static class LinearEquatorialBasis
     {
         // Basis for ΔH (hour angle correction)
-        public static double[] BasisH(AxisPositionRad m)
+        public static double[] BasisHa(AxisPositionRad m)
         {
             double H = m.A1;
             double d = m.A2;
